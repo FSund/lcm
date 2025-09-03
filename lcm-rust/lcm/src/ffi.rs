@@ -17,7 +17,6 @@ pub type lcm_msg_handler_t = Option<unsafe extern "C" fn(rbuf: *const lcm_recv_b
                                                          channel: *const c_char,
                                                          user_data: *mut c_void)>;
 
-#[link(name = "lcm")]
 extern "C" {
     pub fn lcm_create(provider: *const c_char) -> *mut lcm_t;
     pub fn lcm_destroy(lcm: *mut lcm_t);
