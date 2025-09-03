@@ -23,7 +23,7 @@ extern "C" fn handler_callback(rbuf: *const lcm_recv_buf_t,
 {
     let res = catch_unwind(|| {
         trace!("Received data on channel {:?}", unsafe { CStr::from_ptr(chan) });
-        let callback = user_data as *mut Box<FnMut(*const lcm_recv_buf_t)>;
+        let callback = user_data as *mut Box<dyn FnMut(*const lcm_recv_buf_t)>;
         unsafe { (*(*callback))(rbuf); }
     });
 

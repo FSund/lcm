@@ -16,7 +16,7 @@ pub trait Message {
 
     /// Decodes a message from a buffer,
     /// and also checks that the hash at the beginning is correct.
-    fn decode_with_hash(mut buffer: &mut Read) -> Result<Self>
+    fn decode_with_hash(mut buffer: &mut dyn Read) -> Result<Self>
         where Self: Sized
     {
         let hash: u64 = Message::decode(&mut buffer)?;
@@ -33,10 +33,10 @@ pub trait Message {
 
     /// Encodes a message into a buffer.
     /// `Lcm` uses a `Vec<u8>` with its capacity set to the value returned by [`size()`].
-    fn encode(&self, buffer: &mut Write) -> Result<()>;
+    fn encode(&self, buffer: &mut dyn Write) -> Result<()>;
 
     /// Decodes a message from a buffer.
-    fn decode(buffer: &mut Read) -> Result<Self> where Self: Sized;
+    fn decode(buffer: &mut dyn Read) -> Result<Self> where Self: Sized;
 
     /// Returns the number of bytes this message is expected to take when encoded.
     fn size(&self) -> usize;
@@ -47,7 +47,7 @@ impl Message for bool {
         0
     }
 
-    fn encode(&self, buffer: &mut Write) -> Result<()> {
+    fn encode(&self, buffer: &mut dyn Write) -> Result<()> {
         let value: i8 = match *self {
             true => 1,
             false => 0,
@@ -55,7 +55,7 @@ impl Message for bool {
         value.encode(buffer)
     }
 
-    fn decode(buffer: &mut Read) -> Result<Self> {
+    fn decode(buffer: &mut dyn Read) -> Result<Self> {
         let value = buffer.read_i8()?;
         match value {
             0 => Ok(false),
@@ -75,11 +75,11 @@ impl Message for u8 {
         1 << 0
     }
 
-    fn encode(&self, buffer: &mut Write) -> Result<()> {
+    fn encode(&self, buffer: &mut dyn Write) -> Result<()> {
         buffer.write_u8(*self)
     }
 
-    fn decode(buffer: &mut Read) -> Result<Self> {
+    fn decode(buffer: &mut dyn Read) -> Result<Self> {
         buffer.read_u8()
     }
 
@@ -93,11 +93,11 @@ impl Message for i8 {
         1 << 1
     }
 
-    fn encode(&self, buffer: &mut Write) -> Result<()> {
+    fn encode(&self, buffer: &mut dyn Write) -> Result<()> {
         buffer.write_i8(*self)
     }
 
-    fn decode(buffer: &mut Read) -> Result<Self> {
+    fn decode(buffer: &mut dyn Read) -> Result<Self> {
         buffer.read_i8()
     }
 
@@ -111,11 +111,11 @@ impl Message for i16 {
         1 << 2
     }
 
-    fn encode(&self, buffer: &mut Write) -> Result<()> {
+    fn encode(&self, buffer: &mut dyn Write) -> Result<()> {
         buffer.write_i16::<BigEndian>(*self)
     }
 
-    fn decode(buffer: &mut Read) -> Result<Self> {
+    fn decode(buffer: &mut dyn Read) -> Result<Self> {
         buffer.read_i16::<BigEndian>()
     }
 
@@ -129,11 +129,11 @@ impl Message for i32 {
         1 << 3
     }
 
-    fn encode(&self, buffer: &mut Write) -> Result<()> {
+    fn encode(&self, buffer: &mut dyn Write) -> Result<()> {
         buffer.write_i32::<BigEndian>(*self)
     }
 
-    fn decode(buffer: &mut Read) -> Result<Self> {
+    fn decode(buffer: &mut dyn Read) -> Result<Self> {
         buffer.read_i32::<BigEndian>()
     }
 
@@ -147,11 +147,11 @@ impl Message for u64 {
         1 << 4
     }
 
-    fn encode(&self, buffer: &mut Write) -> Result<()> {
+    fn encode(&self, buffer: &mut dyn Write) -> Result<()> {
         buffer.write_u64::<BigEndian>(*self)
     }
 
-    fn decode(buffer: &mut Read) -> Result<Self> {
+    fn decode(buffer: &mut dyn Read) -> Result<Self> {
         buffer.read_u64::<BigEndian>()
     }
 
@@ -165,11 +165,11 @@ impl Message for i64 {
         1 << 5
     }
 
-    fn encode(&self, buffer: &mut Write) -> Result<()> {
+    fn encode(&self, buffer: &mut dyn Write) -> Result<()> {
         buffer.write_i64::<BigEndian>(*self)
     }
 
-    fn decode(buffer: &mut Read) -> Result<Self> {
+    fn decode(buffer: &mut dyn Read) -> Result<Self> {
         buffer.read_i64::<BigEndian>()
     }
 
@@ -183,11 +183,11 @@ impl Message for f32 {
         1 << 6
     }
 
-    fn encode(&self, buffer: &mut Write) -> Result<()> {
+    fn encode(&self, buffer: &mut dyn Write) -> Result<()> {
         buffer.write_f32::<BigEndian>(*self)
     }
 
-    fn decode(buffer: &mut Read) -> Result<Self> {
+    fn decode(buffer: &mut dyn Read) -> Result<Self> {
         buffer.read_f32::<BigEndian>()
     }
 
@@ -201,11 +201,11 @@ impl Message for f64 {
         1 << 7
     }
 
-    fn encode(&self, buffer: &mut Write) -> Result<()> {
+    fn encode(&self, buffer: &mut dyn Write) -> Result<()> {
         buffer.write_f64::<BigEndian>(*self)
     }
 
-    fn decode(buffer: &mut Read) -> Result<Self> {
+    fn decode(buffer: &mut dyn Read) -> Result<Self> {
         buffer.read_f64::<BigEndian>()
     }
 
@@ -219,7 +219,7 @@ impl Message for String {
         1 << 8
     }
 
-    fn encode(&self, buffer: &mut Write) -> Result<()> {
+    fn encode(&self, buffer: &mut dyn Write) -> Result<()> {
         let len: i32 = self.len() as i32 + 1;
         len.encode(buffer)?;
         for &b in self.as_bytes() {
@@ -229,7 +229,7 @@ impl Message for String {
         Ok(())
     }
 
-    fn decode(buffer: &mut Read) -> Result<Self> {
+    fn decode(buffer: &mut dyn Read) -> Result<Self> {
         let len = buffer.read_i32::<BigEndian>()? - 1;
         let mut buf = Vec::with_capacity(len as usize);
         for _ in 0..len {

@@ -19,7 +19,7 @@ pub struct Lcm {
     // This has to be Box<Box<..>> due to the fact that &Box<..> is what needs to be sent
     // across the FFI boundary. Sending &*Box<..> results in not being able to
     // reconstruct the trait object when it returns to the Rust side of the boundary.
-    subscriptions: HashMap<*mut lcm_subscription_t, Box<Box<FnMut(*const lcm_recv_buf_t)>>>,
+    subscriptions: HashMap<*mut lcm_subscription_t, Box<Box<dyn FnMut(*const lcm_recv_buf_t)>>>,
 }
 
 impl Lcm {
@@ -65,7 +65,7 @@ impl Lcm {
 
         // This is a double box for a reason
         let handler = {
-            let handler: Box<FnMut(*const lcm_recv_buf_t)> =
+            let handler: Box<dyn FnMut(*const lcm_recv_buf_t)> =
                 Box::new(move |rbuf: *const lcm_recv_buf_t| {
                     trace!("Running handler");
                     let mut buf = unsafe {

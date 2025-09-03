@@ -19,7 +19,7 @@ pub struct ThreadsafeLcm {
 
     // This is a solid type. I'm proud of what I've done here.
     subscriptions:
-      Mutex<HashMap<*mut lcm_subscription_t, Box<Box<FnMut(*const lcm_recv_buf_t) + Sync + Send>>>>,
+      Mutex<HashMap<*mut lcm_subscription_t, Box<Box<dyn FnMut(*const lcm_recv_buf_t) + Sync + Send>>>>,
 }
 unsafe impl Sync for ThreadsafeLcm { }
 unsafe impl Send for ThreadsafeLcm { }
@@ -70,7 +70,7 @@ impl ThreadsafeLcm {
 
         // This is a double box for a reason
         let handler = {
-            let handler: Box<FnMut(*const lcm_recv_buf_t) + Sync + Send> =
+            let handler: Box<dyn FnMut(*const lcm_recv_buf_t) + Sync + Send> =
                 Box::new(move |rbuf: *const lcm_recv_buf_t| {
                     trace!("Running handler");
                     let mut buf = unsafe {
