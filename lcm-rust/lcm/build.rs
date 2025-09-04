@@ -18,6 +18,16 @@ fn main() {
     let export_header_path = PathBuf::from(&out_dir).join("lcm_export.h");
     std::fs::write(&export_header_path, generate_export_header()).unwrap();
 
+    // Generate lcm_c_namespace.h from template
+    let namespace_header_in = lcm_src_dir.join("lcm_c_namespace.h.in");
+    let namespace_header_out = PathBuf::from(&out_dir).join("lcm_c_namespace.h");
+    let template =
+        std::fs::read_to_string(&namespace_header_in).expect("Failed to read lcm_c_namespace.h.in");
+    // Substitute @LCM_C_NAMESPACE@ with default value "lcm"
+    let namespace_value = "lcm"; // You may want to make this configurable
+    let header = template.replace("@LCM_C_NAMESPACE@", namespace_value);
+    std::fs::write(&namespace_header_out, header).expect("Failed to write lcm_c_namespace.h");
+
     let mut build = cc::Build::new();
 
     // Add LCM source files
@@ -48,6 +58,7 @@ fn main() {
     // Include directories
     build.include(&lcm_src_dir);
     build.include(&out_dir); // Include the generated headers directory
+    build.include(&out_dir); // Ensure generated lcm_c_namespace.h is found
 
     // Compiler definitions
     build.define("_FILE_OFFSET_BITS", "64");
