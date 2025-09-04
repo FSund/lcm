@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "lcm_c_namespace.h"
 #include "lcm_version.h"
 
 #ifdef LCM_PYTHON
@@ -20,6 +21,17 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define lcm_create LCM_C_NAMESPACED(create)
+#define lcm_destroy LCM_C_NAMESPACED(destroy)
+#define lcm_get_fileno LCM_C_NAMESPACED(get_fileno)
+#define lcm_subscribe LCM_C_NAMESPACED(subscribe)
+#define lcm_unsubscribe LCM_C_NAMESPACED(unsubscribe)
+#define lcm_publish LCM_C_NAMESPACED(publish)
+#define lcm_handle LCM_C_NAMESPACED(handle)
+#define lcm_handle_timeout LCM_C_NAMESPACED(handle_timeout)
+#define lcm_subscription_set_queue_capacity LCM_C_NAMESPACED(subscription_set_queue_capacity)
+#define lcm_subscription_get_queue_size LCM_C_NAMESPACED(subscription_get_queue_size)
 
 /**
  * @defgroup LcmC C API Reference
@@ -59,8 +71,7 @@ typedef struct _lcm_subscription_t lcm_subscription_t;
  * Each instance represents one message.
  */
 typedef struct _lcm_recv_buf_t lcm_recv_buf_t;
-struct _lcm_recv_buf_t
-{
+struct _lcm_recv_buf_t {
     /**
      * the data received (raw bytes)
      */
@@ -89,8 +100,7 @@ struct _lcm_recv_buf_t
  * @param channel the channel the message was received on
  * @param user_data the user-specified parameter passed to lcm_subscribe()
  */
-typedef void (*lcm_msg_handler_t) (const lcm_recv_buf_t *rbuf,
-        const char *channel, void *user_data);
+typedef void (*lcm_msg_handler_t)(const lcm_recv_buf_t *rbuf, const char *channel, void *user_data);
 
 /**
  * @brief Constructor
@@ -190,13 +200,13 @@ typedef void (*lcm_msg_handler_t) (const lcm_recv_buf_t *rbuf,
  * lcm_destroy() when no longer needed.
  */
 LCM_EXPORT
-lcm_t * lcm_create (const char *provider);
+lcm_t *lcm_create(const char *provider);
 
 /**
  * @brief Destructor
  */
 LCM_EXPORT
-void lcm_destroy (lcm_t *lcm);
+void lcm_destroy(lcm_t *lcm);
 
 /**
  * @brief Returns a file descriptor or socket that can be used with
@@ -212,7 +222,7 @@ void lcm_destroy (lcm_t *lcm);
  * @return a file descriptor suitable for use with select, poll, etc.
  */
 LCM_EXPORT
-int lcm_get_fileno (lcm_t *lcm);
+int lcm_get_fileno(lcm_t *lcm);
 
 /**
  * @brief Subscribe a callback function to a channel, without automatic message
@@ -240,8 +250,8 @@ int lcm_get_fileno (lcm_t *lcm);
  *          the subscription object.
  */
 LCM_EXPORT
-lcm_subscription_t *lcm_subscribe (lcm_t *lcm, const char *channel,
-				   lcm_msg_handler_t handler, void *userdata);
+lcm_subscription_t *lcm_subscribe(lcm_t *lcm, const char *channel, lcm_msg_handler_t handler,
+                                  void *userdata);
 
 /**
  * @brief Unsubscribe a message handler.
@@ -259,7 +269,7 @@ lcm_subscription_t *lcm_subscribe (lcm_t *lcm, const char *channel,
  * @return 0 on success, or -1 if @c handler is not a valid subscription.
  */
 LCM_EXPORT
-int lcm_unsubscribe (lcm_t *lcm, lcm_subscription_t *handler);
+int lcm_unsubscribe(lcm_t *lcm, lcm_subscription_t *handler);
 
 /**
  * @brief Publish a message, specified as a raw byte buffer.
@@ -277,8 +287,7 @@ int lcm_unsubscribe (lcm_t *lcm, lcm_subscription_t *handler);
  * @return 0 on success, -1 on failure.
  */
 LCM_EXPORT
-int lcm_publish (lcm_t *lcm, const char *channel, const void *data,
-        unsigned int datalen);
+int lcm_publish(lcm_t *lcm, const char *channel, const void *data, unsigned int datalen);
 
 /**
  * @brief Wait for and dispatch the next incoming message.
@@ -299,7 +308,7 @@ int lcm_publish (lcm_t *lcm, const char *channel, const void *data,
  * @return 0 normally, or -1 when an error has occurred.
  */
 LCM_EXPORT
-int lcm_handle (lcm_t *lcm);
+int lcm_handle(lcm_t *lcm);
 
 /**
  * @brief Wait for and dispatch the next incoming message, up to a time limit.
@@ -323,7 +332,7 @@ int lcm_handle (lcm_t *lcm);
  * an error occured.
  */
 LCM_EXPORT
-int lcm_handle_timeout (lcm_t *lcm, int timeout_millis);
+int lcm_handle_timeout(lcm_t *lcm, int timeout_millis);
 
 /**
  * @brief Adjusts the maximum number of received messages that can be queued up
@@ -344,7 +353,13 @@ int lcm_handle_timeout (lcm_t *lcm, int timeout_millis);
  *
  */
 LCM_EXPORT
-int lcm_subscription_set_queue_capacity(lcm_subscription_t* handler, int num_messages);
+int lcm_subscription_set_queue_capacity(lcm_subscription_t *handler, int num_messages);
+
+/**
+ * @brief Query the current number of unhandled messages queued up for a subscription.
+ */
+LCM_EXPORT
+int lcm_subscription_get_queue_size(lcm_subscription_t *handler);
 
 /**
  * @}

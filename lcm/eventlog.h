@@ -1,8 +1,10 @@
 #ifndef _LCM_EVENTLOG_H_
 #define _LCM_EVENTLOG_H_
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
+
+#include "lcm_c_namespace.h"
 
 #ifdef LCM_PYTHON
 #define LCM_EXPORT
@@ -13,6 +15,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define lcm_eventlog_create LCM_C_NAMESPACED(eventlog_create)
+#define lcm_eventlog_read_next_event LCM_C_NAMESPACED(eventlog_read_next_event)
+#define lcm_eventlog_free_event LCM_C_NAMESPACED(eventlog_free_event)
+#define lcm_eventlog_seek_to_timestamp LCM_C_NAMESPACED(eventlog_seek_to_timestamp)
+#define lcm_eventlog_write_event LCM_C_NAMESPACED(eventlog_write_event)
+#define lcm_eventlog_destroy LCM_C_NAMESPACED(eventlog_destroy)
 
 /**
  * @defgroup LcmC_lcm_eventlog_t lcm_eventlog_t
@@ -29,8 +38,7 @@ extern "C" {
  */
 
 typedef struct _lcm_eventlog_t lcm_eventlog_t;
-struct _lcm_eventlog_t
-{
+struct _lcm_eventlog_t {
     /**
      * The underlying file handle.  Made available for debugging.
      */
@@ -69,11 +77,11 @@ struct _lcm_eventlog_event_t {
     /**
      * Channel that the message was received on
      */
-    char     *channel;
+    char *channel;
     /**
      * Raw byte buffer containing the message payload.
      */
-    void     *data;
+    void *data;
 };
 
 /**
@@ -128,8 +136,7 @@ int lcm_eventlog_seek_to_timestamp(lcm_eventlog_t *eventlog, int64_t ts);
  * @return 0 on success, -1 on failure.
  */
 LCM_EXPORT
-int lcm_eventlog_write_event(lcm_eventlog_t *eventlog,
-        lcm_eventlog_event_t *event);
+int lcm_eventlog_write_event(lcm_eventlog_t *eventlog, lcm_eventlog_event_t *event);
 
 /**
  * Close a log file and release allocated resources.

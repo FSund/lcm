@@ -2,6 +2,10 @@
 
 include(FindPackageHandleStandardArgs)
 
+# This is set because `find_package_handle_standard_args` is also used for each
+# component of GLib2, e.g., `GLib2_glid`, `GLib2_gio`, etc.
+set(FPHSA_NAME_MISMATCHED TRUE)
+
 #------------------------------------------------------------------------------
 function(_glib2_find_include VAR HEADER)
   list(APPEND CMAKE_PREFIX_PATH $ENV{GLIB_PATH})
@@ -23,6 +27,10 @@ endfunction()
 function(_glib2_find_library VAR LIB)
   list(APPEND CMAKE_PREFIX_PATH $ENV{GLIB_PATH})
 
+  if(WIN32)
+	set(CMAKE_FIND_LIBRARY_SUFFIXES ".dll.a")
+	set(CMAKE_FIND_LIBRARY_PREFIXES "lib")
+  endif()
   find_library(GLIB2_${VAR}_LIBRARY NAMES ${LIB}-2.0 ${LIB})
   mark_as_advanced(GLIB2_${VAR}_LIBRARY)
 
@@ -41,7 +49,6 @@ function(_glib2_add_target TARGET LIBRARY)
   endforeach()
 
   find_package_handle_standard_args(GLib2_${TARGET}
-    FOUND_VAR GLib2_${TARGET}_FOUND
     REQUIRED_VARS ${_deps}
   )
 
@@ -62,6 +69,24 @@ function(_glib2_add_target TARGET LIBRARY)
 endfunction()
 
 ###############################################################################
+
+find_package(PkgConfig)
+
+if(${PkgConfig_FOUND})
+
+  pkg_check_modules(GLIB glib-2.0)
+
+  if(${GLIB_FOUND})
+    add_library(GLib2::glib UNKNOWN IMPORTED)
+    set_target_properties(GLib2::glib PROPERTIES
+      IMPORTED_LOCATION "${pkgcfg_lib_GLIB_glib-2.0}"
+      INTERFACE_COMPILE_OPTIONS "${GLIB_CFLAGS_OTHER}"
+      INTERFACE_INCLUDE_DIRECTORIES "${GLIB_INCLUDE_DIRS}"
+    )
+    return()
+  endif()
+
+endif()
 
 _glib2_find_library(GLIB glib)
 _glib2_find_include(GLIB glib.h)

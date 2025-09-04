@@ -5,9 +5,12 @@
 #                  [CPP_HEADERS <VARIABLE_NAME>
 #                   [CPP_INCLUDE <PATH>] [CPP11]]
 #                  [JAVA_SOURCES <VARIABLE_NAME>]
+#                  [CSHARP_SOURCES <VARIABLE_NAME>]
 #                  [PYTHON_SOURCES <VARIABLE_NAME>]
 #                  [LUA_SOURCES <VARIABLE_NAME>]
+#                  [GO_SOURCES <VARIABLE_NAME>]
 #                  [DESTINATION <PATH>]
+#                  [GO_DESTINATION <PATH>]
 #                  <FILE> [<FILE>...])
 #     generate bindings for specified LCM type definition files
 #
@@ -24,12 +27,7 @@
 #   lcm_install_python([DESTINATION <PATH>]
 #                      <FILE> [<FILE>...])
 
-if(WIN32)
-  # Need 'cmake -E env'
-  cmake_minimum_required(VERSION 3.1.0)
-else()
-  cmake_minimum_required(VERSION 2.8.3)
-endif()
+cmake_minimum_required(VERSION 3.10.0)
 include(CMakeParseArguments)
 
 #------------------------------------------------------------------------------
@@ -45,6 +43,14 @@ macro(_lcm_add_outputs VAR)
   foreach(_file ${ARGN})
     list(APPEND ${${VAR}} ${_DESTINATION}/${_file})
     list(APPEND _outputs ${_DESTINATION}/${_file})
+  endforeach()
+endmacro()
+
+#------------------------------------------------------------------------------
+macro(_lcm_add_go_outputs VAR)
+  foreach(_file ${ARGN})
+    list(APPEND ${${VAR}} ${_GO_DESTINATION}/${_file})
+    list(APPEND _outputs ${_GO_DESTINATION}/${_file})
   endforeach()
 endmacro()
 
@@ -166,9 +172,13 @@ function(lcm_wrap_types)
     C_HEADERS C_SOURCES C_INCLUDE C_EXPORT
     CPP_HEADERS CPP_INCLUDE
     JAVA_SOURCES
+    CSHARP_SOURCES
     PYTHON_SOURCES
     LUA_SOURCES
+    GO_SOURCES
     DESTINATION
+    GO_DESTINATION
+    PACKAGE_PREFIX
   )
   set(_mv_opts "")
   cmake_parse_arguments("" "${_flags}" "${_sv_opts}" "${_mv_opts}" ${ARGN})
@@ -189,17 +199,22 @@ function(lcm_wrap_types)
   if(NOT DEFINED _C_HEADERS AND
      NOT DEFINED _CPP_HEADERS AND
      NOT DEFINED _JAVA_SOURCES AND
+     NOT DEFINED _CSHARP_SOURCES AND
      NOT DEFINED _PYTHON_SOURCES AND
-     NOT DEFINED _LUA_SOURCES)
+     NOT DEFINED _LUA_SOURCES AND
+     NOT DEFINED _GO_SOURCES)
     message(SEND_ERROR
       "lcm_wrap_types: at least one of C_HEADERS, CPP_HEADERS, JAVA_SOURCES,"
-      " PYTHON_SOURCES or LUA_SOURCES is required")
+      " CSHARP_SOURCES, PYTHON_SOURCES, LUA_SOURCES or GO_SOURCES is required")
     return()
   endif()
 
   # Set default destination, if none given
   if(NOT DEFINED _DESTINATION)
     set(_DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+  endif()
+  if(NOT DEFINED _GO_DESTINATION)
+    set(_GO_DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/go/src")
   endif()
 
   # Set up arguments for invoking lcm-gen
@@ -233,11 +248,20 @@ function(lcm_wrap_types)
   if(DEFINED _JAVA_SOURCES)
     list(APPEND _args --java --jpath ${_DESTINATION})
   endif()
+  if(DEFINED _CSHARP_SOURCES)
+    list(APPEND _args --csharp --csharp-path ${_DESTINATION})
+  endif()
   if(DEFINED _PYTHON_SOURCES)
     list(APPEND _args --python --python-no-init --ppath ${_DESTINATION})
   endif()
   if(DEFINED _LUA_SOURCES)
     list(APPEND _args --lua --lua-no-init --lpath ${_DESTINATION})
+  endif()
+  if(DEFINED _GO_SOURCES)
+    list(APPEND _args --go --go-path ${_GO_DESTINATION})
+  endif()
+  if(DEFINED _PACKAGE_PREFIX)
+    list(APPEND _args --package-prefix ${_PACKAGE_PREFIX})
   endif()
 
   # Create build rules
@@ -247,6 +271,8 @@ function(lcm_wrap_types)
   foreach(_lcmtype ${_UNPARSED_ARGUMENTS})
     set(_package "")
     set(_outputs "")
+    set(_package_dir ".")
+    set(_package_pre "")
     # Read type definition
     file(READ ${_lcmtype} _text)
     # Strip comments
@@ -260,6 +286,10 @@ function(lcm_wrap_types)
       if(_line MATCHES "^ *package +")
         # Get package name
         _lcm_extract_token(_package 1 "${_line}")
+        # Append package prefix if one was specified
+        if(DEFINED _PACKAGE_PREFIX)
+          set(_package "${_PACKAGE_PREFIX}.${_package}")
+        endif()
         string(REPLACE "." "/" _package_dir "${_package}")
         string(REPLACE "." "_" _package_pre "${_package}")
         if(DEFINED _C_HEADERS AND _CREATE_C_AGGREGATE_HEADER)
@@ -274,8 +304,13 @@ function(lcm_wrap_types)
 
         # Determine output file name(s) and add to output variables
         if(DEFINED _C_HEADERS AND DEFINED _C_SOURCES)
-          _lcm_add_outputs(_C_HEADERS ${_package_pre}_${_type}.h)
-          _lcm_add_outputs(_C_SOURCES ${_package_pre}_${_type}.c)
+          if(_package_pre STREQUAL "")
+            _lcm_add_outputs(_C_HEADERS ${_type}.h)
+            _lcm_add_outputs(_C_SOURCES ${_type}.c)
+          else()
+            _lcm_add_outputs(_C_HEADERS ${_package_pre}_${_type}.h)
+            _lcm_add_outputs(_C_SOURCES ${_package_pre}_${_type}.c)
+          endif()
           if(_CREATE_CPP_AGGREGATE_HEADER)
             _lcm_add_aggregate_include("${_package_dir}.h"
               "${_package_pre}_${_type}.h")
@@ -298,28 +333,33 @@ function(lcm_wrap_types)
           _lcm_add_lua_type(${_package_dir} ${_type})
           _lcm_add_outputs(_LUA_SOURCES ${_package_dir}/${_type}.lua)
         endif()
+        if(DEFINED _GO_SOURCES)
+          _lcm_add_go_outputs(_GO_SOURCES ${_package_dir}/${_type}.go)
+        endif()
         if(DEFINED _JAVA_SOURCES)
-          _lcm_add_outputs(_JAVA_SOURCES ${_package_dir}/${_type}.java)
+          if(_package_dir STREQUAL ".")
+            _lcm_add_outputs(_JAVA_SOURCES lcmtypes/${_type}.java)
+          else()
+            _lcm_add_outputs(_JAVA_SOURCES ${_package_dir}/${_type}.java)
+          endif()
+        endif()
+        if(DEFINED _CSHARP_SOURCES)
+          if(_package_dir STREQUAL ".")
+            _lcm_add_outputs(_CSHARP_SOURCES LCMTypes/${_type}.cs)
+          else()
+            _lcm_add_outputs(_CSHARP_SOURCES ${_package_dir}/${_type}.cs)
+          endif()
         endif()
       endif()
     endforeach()
 
     # Define build command for input file
     get_filename_component(_lcmtype_full "${_lcmtype}" ABSOLUTE)
-    if(WIN32)
-      add_custom_command(
-        OUTPUT ${_outputs}
-        COMMAND ${CMAKE_COMMAND} -E env "PATH=${LCM_LCMGEN_PATH}"
-          $<TARGET_FILE:lcm-gen> ${_args} ${_lcmtype_full}
-        DEPENDS ${_lcmtype}
-      )
-    else()
-      add_custom_command(
-        OUTPUT ${_outputs}
-        COMMAND lcm-gen ${_args} ${_lcmtype_full}
-        DEPENDS ${_lcmtype}
-      )
-    endif()
+    add_custom_command(
+      OUTPUT ${_outputs}
+      COMMAND ${LCM_NAMESPACE}lcm-gen ${_args} ${_lcmtype_full}
+      DEPENDS ${_lcmtype}
+    )
   endforeach()
 
   # Finalize aggregate headers and packages
@@ -331,8 +371,10 @@ function(lcm_wrap_types)
   _lcm_export(_C_HEADERS)
   _lcm_export(_CPP_HEADERS)
   _lcm_export(_JAVA_SOURCES)
+  _lcm_export(_CSHARP_SOURCES)
   _lcm_export(_PYTHON_SOURCES)
   _lcm_export(_LUA_SOURCES)
+  _lcm_export(_GO_SOURCES)
 endfunction()
 
 #------------------------------------------------------------------------------
@@ -357,7 +399,9 @@ if(NOT CMAKE_VERSION VERSION_LESS 3.1)
       # Add library
       add_library(${NAME} ${_type} ${ARGN})
       add_dependencies(${NAME} ${NAME}.sources)
-      target_link_libraries(${NAME} PRIVATE lcm PUBLIC lcm-coretypes)
+      target_link_libraries(${NAME}
+        PRIVATE ${LCM_NAMESPACE}lcm-static
+        PUBLIC ${LCM_NAMESPACE}lcm-coretypes)
 
     # C++ library
     elseif(LANGUAGE MATCHES "CXX|CPP|C\\+\\+")
@@ -367,7 +411,7 @@ if(NOT CMAKE_VERSION VERSION_LESS 3.1)
 
       # Add library
       add_library(${NAME} INTERFACE)
-      target_link_libraries(${NAME} INTERFACE lcm-coretypes)
+      target_link_libraries(${NAME} INTERFACE ${LCM_NAMESPACE}lcm-coretypes)
 
       # Add dependency on generated sources
       # NOTE: dependencies on INTERFACE targets not supported before CMake 3.3
@@ -434,16 +478,16 @@ function(lcm_install_python)
 
   # Set default destination and relative path, if none given
   if(NOT DEFINED _DESTINATION)
-    if(NOT PYTHONINTERP_FOUND)
+    if(NOT Python_Interpreter_FOUND AND NOT PYTHONINTERP_FOUND)
       message(SEND_ERROR
         "lcm_install_python: no DESTINATION given"
         " and no Python interpreter found (required to guess DESTINATION)")
       return()
     endif()
     execute_process(
-      COMMAND "${PYTHON_EXECUTABLE}" -c "if True:
-        from distutils import sysconfig as sc
-        print(sc.get_python_lib(prefix='', plat_specific=True))"
+      COMMAND "${Python_EXECUTABLE}" -c "if True:
+        import sysconfig as sc
+        print(sc.get_path('platlib'))"
       OUTPUT_VARIABLE _DESTINATION
       OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif()

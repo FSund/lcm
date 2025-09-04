@@ -2,6 +2,12 @@ if(UNIX)
   find_package(Threads)
 endif()
 
+configure_file(
+  lcm_c_namespace.h.in
+  lcm_c_namespace.h
+  @ONLY
+)
+
 set(lcm_sources
   eventlog.c
   lcm.c
@@ -23,6 +29,7 @@ set(lcm_install_headers
   lcm_version.h
   lcm-cpp.hpp
   lcm-cpp-impl.hpp
+  ${CMAKE_CURRENT_BINARY_DIR}/lcm_c_namespace.h
   ${CMAKE_CURRENT_BINARY_DIR}/lcm_export.h
 )
 
@@ -64,6 +71,10 @@ foreach(lcm_lib lcm lcm-static)
     GLib2::glib
     ${CMAKE_THREAD_LIBS_INIT}
   )
+
+  if(WIN32)
+    target_link_libraries(${lcm_lib} PRIVATE wsock32 ws2_32)
+  endif()
 endforeach()
 
 generate_export_header(lcm STATIC_DEFINE LCM_STATIC)

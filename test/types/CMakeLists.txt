@@ -9,6 +9,9 @@ endif()
 if(LCM_ENABLE_LUA)
   set(lua_args LUA_SOURCES lua_sources)
 endif()
+if(LCM_ENABLE_GO)
+  set(go_args GO_SOURCES go_sources)
+endif()
 
 lcm_wrap_types(
   C_EXPORT lcmtest
@@ -18,6 +21,7 @@ lcm_wrap_types(
   ${python_args}
   ${java_args}
   ${lua_args}
+  ${go_args}
   lcmtest/bools_t.lcm
   lcmtest/byte_array_t.lcm
   lcmtest/comments_t.lcm
@@ -35,6 +39,12 @@ lcm_add_library(lcm-test-types-c C ${c_sources} ${c_headers})
 generate_export_header(lcm-test-types-c BASE_NAME lcmtest)
 set_target_properties(lcm-test-types-c PROPERTIES OUTPUT_NAME lcm-test-types)
 target_include_directories(lcm-test-types-c INTERFACE
+  ${CMAKE_CURRENT_BINARY_DIR})
+
+lcm_add_library(lcm-test-types-c-static C STATIC ${c_sources} ${c_headers})
+generate_export_header(lcm-test-types-c-static BASE_NAME lcmtest)
+set_target_properties(lcm-test-types-c-static PROPERTIES OUTPUT_NAME lcm-test-types)
+target_include_directories(lcm-test-types-c-static INTERFACE
   ${CMAKE_CURRENT_BINARY_DIR})
 
 lcm_add_library(lcm-test-types-cpp CPP ${cpp_headers})

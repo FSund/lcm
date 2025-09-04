@@ -6,10 +6,19 @@ critical. It provides a publish/subscribe message passing model and automatic
 marshalling/unmarshalling code generation with bindings for applications in a
 variety of programming languages.
 
+# Roadmap
+
+The LCM project is active again. The current long-term plan is to focus on stability and maintenance
+patches to fix longstanding issues. Longer term we're open to evolution of LCM to have additional
+features (as long as backwards compatibility is enforced). We're very open to community
+feedback and involvement on new features.
+
 # Quick Links
 
+* [Installing LCM](https://lcm-proj.github.io/lcm/content/install-instructions.html)
+* [Building LCM from source](https://lcm-proj.github.io/lcm/content/build-instructions.html)
 * [LCM downloads](https://github.com/lcm-proj/lcm/releases)
-* [Website and documentation](http://lcm-proj.github.io)
+* [Website and documentation](https://lcm-proj.github.io/lcm)
 
 # Features
 
@@ -25,14 +34,22 @@ variety of programming languages.
 
 * Platforms:
   * GNU/Linux
-  * OS X
-  * Windows
-  * Any POSIX-1.2001 system (e.g., Cygwin, Solaris, BSD, etc.)
+      * Ubuntu (22.04 and 24.04)
+      * Fedora (41)
+  * macOS (13 and 14)
+  * Windows (2019 and 2022) via MSYS2
 * Languages
   * C
   * C++
-  * C#
   * Java
   * Lua
   * MATLAB
-  * Python
+  * Python (3.7 and later)
+
+## Unmaintained languages
+
+The following languages are currently unmaintained. PRs for these languages are still welcome and if
+you are interested in maintaining them please let us know.
+
+ * Go
+ * C#/.NET
