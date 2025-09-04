@@ -5,7 +5,7 @@ fn main() {
     let target = env::var("TARGET").unwrap();
     let out_dir = env::var("OUT_DIR").unwrap();
     let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    
+
     // Path to the LCM C source directory (relative to the project root)
     let lcm_src_dir = PathBuf::from(&manifest_dir)
         .parent()
@@ -13,17 +13,17 @@ fn main() {
         .parent()
         .unwrap()
         .join("lcm");
-    
+
     // Generate lcm_export.h header first
     let export_header_path = PathBuf::from(&out_dir).join("lcm_export.h");
     std::fs::write(&export_header_path, generate_export_header()).unwrap();
-    
+
     let mut build = cc::Build::new();
-    
+
     // Add LCM source files
     let lcm_sources = [
         "eventlog.c",
-        "lcm.c", 
+        "lcm.c",
         "lcm_file.c",
         "lcm_memq.c",
         "lcm_mpudpm.c",
@@ -34,21 +34,21 @@ fn main() {
         "lcmtypes/channel_port_map_update_t.c",
         "lcmtypes/channel_to_port_t.c",
     ];
-    
+
     for source in &lcm_sources {
         build.file(lcm_src_dir.join(source));
     }
-    
+
     // Add Windows-specific sources if building for Windows
     if target.contains("windows") {
         build.file(lcm_src_dir.join("windows/WinLCM.cpp"));
         build.file(lcm_src_dir.join("windows/WinPorting.cpp"));
     }
-    
+
     // Include directories
     build.include(&lcm_src_dir);
     build.include(&out_dir); // Include the generated headers directory
-    
+
     // Compiler definitions
     build.define("_FILE_OFFSET_BITS", "64");
     build.define("_LARGEFILE_SOURCE", None);
@@ -56,19 +56,19 @@ fn main() {
     build.define("LCM_STATIC", None);
     build.define("_DEFAULT_SOURCE", None); // For strdup and other POSIX functions
     build.define("_GNU_SOURCE", None); // Additional GNU extensions
-    
+
     // Platform-specific configurations
     if target.contains("windows") {
         // Windows-specific settings
         build.define("WIN32", None);
         build.define("_WIN32_WINNT", "0x0601"); // Windows 7+
-        
+
         // Link against Windows libraries
         println!("cargo:rustc-link-lib=ws2_32");
         println!("cargo:rustc-link-lib=iphlpapi");
     } else {
         // Unix-like platforms
-        
+
         // Try to find glib-2.0 using pkg-config
         match pkg_config::Config::new()
             .atleast_version("2.0")
@@ -92,7 +92,7 @@ fn main() {
                 build.include("/usr/lib/x86_64-linux-gnu/glib-2.0/include");
                 build.include("/usr/lib64/glib-2.0/include");
                 build.include("/usr/lib/glib-2.0/include");
-                
+
                 // Try pkg-config style paths on different distributions
                 build.include("/usr/include/glib-2.0");
                 build.include("/usr/lib/glib-2.0/include");
@@ -100,33 +100,36 @@ fn main() {
                 build.include("/usr/local/lib/glib-2.0/include");
                 build.include("/opt/homebrew/include/glib-2.0"); // macOS Homebrew
                 build.include("/opt/homebrew/lib/glib-2.0/include");
-                
+
                 println!("cargo:rustc-link-lib=glib-2.0");
                 println!("cargo:rustc-link-lib=gobject-2.0");
             }
         }
-        
+
         // Link pthread on Unix-like systems
         println!("cargo:rustc-link-lib=pthread");
     }
-    
+
     // Set C standard
     build.std("c99");
-    
+
     // Enable optimization for release builds
     if env::var("PROFILE").unwrap() == "release" {
         build.opt_level(3);
     }
-    
+
     // Compile the library
     build.compile("lcm");
-    
+
     // Tell cargo to re-run this script if any of the C source files change
     println!("cargo:rerun-if-changed={}", lcm_src_dir.display());
     for source in &lcm_sources {
-        println!("cargo:rerun-if-changed={}", lcm_src_dir.join(source).display());
+        println!(
+            "cargo:rerun-if-changed={}",
+            lcm_src_dir.join(source).display()
+        );
     }
-    
+
     // Make the include directory available to the Rust code
     println!("cargo:include={}", lcm_src_dir.display());
     println!("cargo:include={}", out_dir);
