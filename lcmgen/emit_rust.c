@@ -1,24 +1,40 @@
+#include <assert.h>
 #include <ctype.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 #include <string.h>
 #include <sys/stat.h>
 
 #include "lcmgen.h"
 
-#define INDENT(n) (4*(n))
+#define INDENT(n) (4 * (n))
 
-#define emit_start(n, ...) do { fprintf(f, "%*s", INDENT(n), ""); fprintf(f, __VA_ARGS__); } while (0)
-#define emit_continue(...) do { fprintf(f, __VA_ARGS__); } while (0)
-#define emit_end(...) do { fprintf(f, __VA_ARGS__); fprintf(f, "\n"); } while (0)
-#define emit(n, ...) do { fprintf(f, "%*s", INDENT(n), ""); fprintf(f, __VA_ARGS__); fprintf(f, "\n"); } while (0)
+#define emit_start(n, ...)                \
+    do {                                  \
+        fprintf(f, "%*s", INDENT(n), ""); \
+        fprintf(f, __VA_ARGS__);          \
+    } while (0)
+#define emit_continue(...)       \
+    do {                         \
+        fprintf(f, __VA_ARGS__); \
+    } while (0)
+#define emit_end(...)            \
+    do {                         \
+        fprintf(f, __VA_ARGS__); \
+        fprintf(f, "\n");        \
+    } while (0)
+#define emit(n, ...)                      \
+    do {                                  \
+        fprintf(f, "%*s", INDENT(n), ""); \
+        fprintf(f, __VA_ARGS__);          \
+        fprintf(f, "\n");                 \
+    } while (0)
 
 void setup_rust_options(getopt_t *gopt)
 {
-    getopt_add_string (gopt, 0, "rust-path",    ".",      "Location for .rs files");
-    getopt_add_bool   (gopt, 0, "rust-cargo",      0,      "Emit cargo messages");
+    getopt_add_string(gopt, 0, "rust-path", ".", "Location for .rs files");
+    getopt_add_bool(gopt, 0, "rust-cargo", 0, "Emit cargo messages");
 }
 
 // static char *dots_to_slashes(const char *s)
@@ -30,14 +46,13 @@ void setup_rust_options(getopt_t *gopt)
 //     return p;
 // }
 
-static char *
-dots_to_double_colons(const char *s)
+static char *dots_to_double_colons(const char *s)
 {
     // allocate the maximum possible amount of space needed
-    char* p = (char*) calloc(1, 2 * strlen(s) + 1);
-    char* q = p;
+    char *p = (char *) calloc(1, 2 * strlen(s) + 1);
+    char *q = p;
 
-    for (const char *t=s; *t!=0; t++) {
+    for (const char *t = s; *t != 0; t++) {
         if (*t == '.') {
             *q = ':';
             q++;
@@ -51,7 +66,8 @@ dots_to_double_colons(const char *s)
 }
 
 /// Remove the _t suffix, which is a C convention.
-static char * strip_underscore_t(char const *name) {
+static char *strip_underscore_t(char const *name)
+{
     char *result = strdup(name);
 
     int len = strlen(result);
@@ -59,16 +75,17 @@ static char * strip_underscore_t(char const *name) {
         return result;
     }
 
-    if (result[len-2] == '_' && result[len-1] == 't') {
-        result[len-2] = 0;
+    if (result[len - 2] == '_' && result[len - 1] == 't') {
+        result[len - 2] = 0;
     }
     return result;
 }
 
-static char* make_rust_file_path(const char* prefix, const lcm_struct_t* lcm_struct) {
+static char *make_rust_file_path(const char *prefix, const lcm_struct_t *lcm_struct)
+{
     // allocate space for modfile name
-    char* package_name = lcm_struct->structname->package;
-    char* result = calloc(strlen(prefix) + 1 + strlen(package_name) + 1, sizeof(char));
+    char *package_name = lcm_struct->structname->package;
+    char *result = calloc(strlen(prefix) + 1 + strlen(package_name) + 1, sizeof(char));
     if (result == NULL) {
         return NULL;
     }
@@ -78,7 +95,7 @@ static char* make_rust_file_path(const char* prefix, const lcm_struct_t* lcm_str
     strcat(result, prefix);
     strcat(result, "/");
     strcat(result, package_name);
-    for (char* c = result + strlen(prefix); *c != 0; ++c) {
+    for (char *c = result + strlen(prefix); *c != 0; ++c) {
         if (*c == '.') {
             *c = '/';
         }
@@ -86,14 +103,15 @@ static char* make_rust_file_path(const char* prefix, const lcm_struct_t* lcm_str
     return result;
 }
 
-static char* make_rust_mod_file_name(const char* prefix, const lcm_struct_t* lcm_struct) {
-    static const char* modfile_suffix = "/mod.rs";
-    char* path = make_rust_file_path(prefix, lcm_struct);
+static char *make_rust_mod_file_name(const char *prefix, const lcm_struct_t *lcm_struct)
+{
+    static const char *modfile_suffix = "/mod.rs";
+    char *path = make_rust_file_path(prefix, lcm_struct);
     if (path == NULL) {
         return NULL;
     }
-    char* result = calloc(strlen(path) + strlen(modfile_suffix) + 1, sizeof(char));
-    if (result ==NULL) {
+    char *result = calloc(strlen(path) + strlen(modfile_suffix) + 1, sizeof(char));
+    if (result == NULL) {
         free(path);
         return NULL;
     }
@@ -104,18 +122,18 @@ static char* make_rust_mod_file_name(const char* prefix, const lcm_struct_t* lcm
     return result;
 }
 
-static char* make_rust_file_name(const char* prefix, const lcm_struct_t* lcm_struct) {
-    static const char* rust_suffix = ".rs";
-    char* path = make_rust_file_path(prefix, lcm_struct);
+static char *make_rust_file_name(const char *prefix, const lcm_struct_t *lcm_struct)
+{
+    static const char *rust_suffix = ".rs";
+    char *path = make_rust_file_path(prefix, lcm_struct);
     if (path == NULL) {
         return NULL;
     }
 
     char *basename = strip_underscore_t(lcm_struct->structname->shortname);
 
-    char* result = calloc(strlen(path) + 1 + // path + '/'
-                          strlen(basename) +
-                          strlen(rust_suffix) + 1, // suffix + \0
+    char *result = calloc(strlen(path) + 1 +                               // path + '/'
+                              strlen(basename) + strlen(rust_suffix) + 1,  // suffix + \0
                           sizeof(char));
     if (result == NULL) {
         free(path);
@@ -131,13 +149,14 @@ static char* make_rust_file_name(const char* prefix, const lcm_struct_t* lcm_str
     return result;
 }
 
-static char * make_rust_type_name(const lcm_typename_t *typename) {
+static char *make_rust_type_name(const lcm_typename_t *typename)
+{
     char *result = strip_underscore_t(typename->shortname);
 
     // Convert to camel case
-    char* result_char = result;
+    char *result_char = result;
     int capitalize_next_char = 1;
-    for (const char* c = result; *c != 0; ++c) {
+    for (const char *c = result; *c != 0; ++c) {
         if (*c == '_') {
             capitalize_next_char = 1;
         } else {
@@ -155,13 +174,15 @@ static char * make_rust_type_name(const lcm_typename_t *typename) {
     return result;
 }
 
-static char * make_rustdoc_comment(const char *comment) {
+static char *make_rustdoc_comment(const char *comment)
+{
     int lines = 1;
-    for(const char *c = comment; *c != 0; c++){
-        if (*c == '\n') lines++;
+    for (const char *c = comment; *c != 0; c++) {
+        if (*c == '\n')
+            lines++;
     }
 
-    char *result = calloc(4*lines + strlen(comment) + 1, sizeof(char));
+    char *result = calloc(4 * lines + strlen(comment) + 1, sizeof(char));
     if (result == NULL) {
         return NULL;
     }
@@ -171,7 +192,7 @@ static char * make_rustdoc_comment(const char *comment) {
     result[result_index++] = '/';
     result[result_index++] = '/';
     result[result_index++] = ' ';
-    for(const char *c = comment; *c != 0; c++) {
+    for (const char *c = comment; *c != 0; c++) {
         result[result_index++] = *c;
         if (*c == '\n') {
             result[result_index++] = '/';
@@ -248,15 +269,15 @@ static void make_dirs_for_file(const char *path)
 #else
     int len = strlen(path);
     for (int i = 0; i < len; i++) {
-        if (path[i]=='/') {
-            char *dirpath = (char *) malloc(i+1);
+        if (path[i] == '/') {
+            char *dirpath = (char *) malloc(i + 1);
             strncpy(dirpath, path, i);
-            dirpath[i]=0;
+            dirpath[i] = 0;
 
             mkdir(dirpath, 0755);
             free(dirpath);
 
-            i++; // skip the '/'
+            i++;  // skip the '/'
         }
     }
 #endif
@@ -287,15 +308,14 @@ static void emit_struct_def(lcmgen_t *lcmgen, FILE *f, lcm_struct_t *lcm_struct)
 
     // Include non-primitive types
     for (unsigned int mind = 0; mind < g_ptr_array_size(lcm_struct->members); mind++) {
-        lcm_member_t *lm = (lcm_member_t *)g_ptr_array_index(lcm_struct->members, mind);
+        lcm_member_t *lm = (lcm_member_t *) g_ptr_array_index(lcm_struct->members, mind);
         if (!lcm_is_primitive_type(lm->type->lctypename) &&
             strcmp(lm->type->lctypename, lcm_struct->structname->lctypename)) {
-
             // This is naive, but it is highly unlikely any of these lists will
             // ever get very large.
             int skip = 0;
             for (unsigned int prev = 0; prev < mind; prev++) {
-                lcm_member_t * pm = (lcm_member_t *)g_ptr_array_index(lcm_struct->members, prev);
+                lcm_member_t *pm = (lcm_member_t *) g_ptr_array_index(lcm_struct->members, prev);
                 if (!lcm_is_primitive_type(pm->type->lctypename) &&
                     strcmp(pm->type->lctypename, lm->type->lctypename) == 0) {
                     // We've already emitted a "use" statement for this type
@@ -304,7 +324,7 @@ static void emit_struct_def(lcmgen_t *lcmgen, FILE *f, lcm_struct_t *lcm_struct)
                 }
             }
 
-            if(!skip) {
+            if (!skip) {
                 // This is the first time "use"ing this type
                 char *mapped_tn = map_type_name(lm->type);
                 char *other_pn = dots_to_double_colons(lm->type->package);
@@ -330,7 +350,7 @@ static void emit_struct_def(lcmgen_t *lcmgen, FILE *f, lcm_struct_t *lcm_struct)
     // Arrays are represented by a Vec (for dynamically sized dimensions)
     // or by a GenericArray (for constant sized dimensions)
     for (unsigned int mind = 0; mind < g_ptr_array_size(lcm_struct->members); ++mind) {
-        lcm_member_t* member = (lcm_member_t*) g_ptr_array_index(lcm_struct->members, mind);
+        lcm_member_t *member = (lcm_member_t *) g_ptr_array_index(lcm_struct->members, mind);
 
         int ndim = g_ptr_array_size(member->dimensions);
         if (member->comment != NULL) {
@@ -342,7 +362,8 @@ static void emit_struct_def(lcmgen_t *lcmgen, FILE *f, lcm_struct_t *lcm_struct)
 
         // Iterate forwards and open the array declaration
         for (unsigned int d = 0; d < ndim; ++d) {
-            lcm_dimension_t *dimension = (lcm_dimension_t*) g_ptr_array_index(member->dimensions, d);
+            lcm_dimension_t *dimension =
+                (lcm_dimension_t *) g_ptr_array_index(member->dimensions, d);
             switch (dimension->mode) {
             case LCM_CONST: {
                 emit_continue("[");
@@ -362,8 +383,9 @@ static void emit_struct_def(lcmgen_t *lcmgen, FILE *f, lcm_struct_t *lcm_struct)
         }
 
         // Iterate backwards and close the array declaration
-        for (unsigned int d = ndim; d-- > 0; ) {
-            lcm_dimension_t *dimension = (lcm_dimension_t*) g_ptr_array_index(member->dimensions, d);
+        for (unsigned int d = ndim; d-- > 0;) {
+            lcm_dimension_t *dimension =
+                (lcm_dimension_t *) g_ptr_array_index(member->dimensions, d);
             switch (dimension->mode) {
             case LCM_CONST: {
                 emit_continue("; %s]", dimension->size);
@@ -383,7 +405,8 @@ static void emit_struct_def(lcmgen_t *lcmgen, FILE *f, lcm_struct_t *lcm_struct)
     free(struct_name);
 }
 
-static void emit_constants(lcmgen_t *lcmgen, FILE *f, lcm_struct_t *lcm_struct) {
+static void emit_constants(lcmgen_t *lcmgen, FILE *f, lcm_struct_t *lcm_struct)
+{
     for (unsigned int i = 0; i < g_ptr_array_size(lcm_struct->constants); ++i) {
         lcm_constant_t *lc = (lcm_constant_t *) g_ptr_array_index(lcm_struct->constants, i);
         assert(lcm_is_legal_const_type(lc->lctypename));
@@ -401,13 +424,14 @@ static void emit_constants(lcmgen_t *lcmgen, FILE *f, lcm_struct_t *lcm_struct) 
     }
 }
 
-static void emit_impl_message_hash(FILE *f, lcm_struct_t *lcm_struct) {
-    emit(1,     "fn hash() -> u64 {");
-    emit(2,         "let hash = {");
-    emit(3,             "0x%016"PRIx64"u64", lcm_struct->hash);
+static void emit_impl_message_hash(FILE *f, lcm_struct_t *lcm_struct)
+{
+    emit(1, "fn hash() -> u64 {");
+    emit(2, "let hash = {");
+    emit(3, "0x%016" PRIx64 "u64", lcm_struct->hash);
 
     for (unsigned int mind = 0; mind < g_ptr_array_size(lcm_struct->members); mind++) {
-        lcm_member_t *lm = (lcm_member_t *)g_ptr_array_index(lcm_struct->members, mind);
+        lcm_member_t *lm = (lcm_member_t *) g_ptr_array_index(lcm_struct->members, mind);
         const char *tn = lm->type->lctypename;
         if (!lcm_is_primitive_type(tn) && strcmp(tn, lcm_struct->structname->lctypename)) {
             char *mapped_tn = map_type_name(lm->type);
@@ -416,13 +440,14 @@ static void emit_impl_message_hash(FILE *f, lcm_struct_t *lcm_struct) {
         }
     }
 
-    emit(2,         "};");
-    emit(2,         "(hash << 1) + ((hash >> 63) & 1)");
-    emit(1,     "}");
+    emit(2, "};");
+    emit(2, "(hash << 1) + ((hash >> 63) & 1)");
+    emit(1, "}");
     emit(0, "");
 }
 
-static void emit_impl_message_encode(FILE *f, lcm_struct_t *lcm_struct) {
+static void emit_impl_message_encode(FILE *f, lcm_struct_t *lcm_struct)
+{
     unsigned int n_members = g_ptr_array_size(lcm_struct->members);
     emit(1, "fn encode(&self, %s: &mut Write) -> Result<()> {", n_members ? "mut buffer" : "_");
     for (unsigned int mind = 0; mind < n_members; mind++) {
@@ -431,19 +456,21 @@ static void emit_impl_message_encode(FILE *f, lcm_struct_t *lcm_struct) {
 
         emit(2, "let item = &self.%s;", member->membername);
         for (unsigned int d = 0; d != ndim; ++d) {
-            lcm_dimension_t *dimension = (lcm_dimension_t *) g_ptr_array_index(member->dimensions, d);
+            lcm_dimension_t *dimension =
+                (lcm_dimension_t *) g_ptr_array_index(member->dimensions, d);
             if (dimension->mode == LCM_VAR) {
-                emit(2+d, "if self.%s as usize > item.len() {", dimension->size);
-                emit(2+d+1,    "return Err(Error::new(ErrorKind::Other, \"Size is larger than vector\"));");
-                emit(2+d, "};");
-                emit(2+d, "for item in item.iter().take(self.%s as usize) {", dimension->size);
+                emit(2 + d, "if self.%s as usize > item.len() {", dimension->size);
+                emit(2 + d + 1,
+                     "return Err(Error::new(ErrorKind::Other, \"Size is larger than vector\"));");
+                emit(2 + d, "};");
+                emit(2 + d, "for item in item.iter().take(self.%s as usize) {", dimension->size);
             } else {
-                emit(2+d, "for item in item.iter() {");
+                emit(2 + d, "for item in item.iter() {");
             }
         }
-        emit(2+ndim, "item.encode(&mut buffer)?;");
-        for (unsigned int d = ndim; d-- != 0; ) {
-            emit(2+d, "}");
+        emit(2 + ndim, "item.encode(&mut buffer)?;");
+        for (unsigned int d = ndim; d-- != 0;) {
+            emit(2 + d, "}");
         }
     }
     emit(2, "Ok(())");
@@ -451,40 +478,45 @@ static void emit_impl_message_encode(FILE *f, lcm_struct_t *lcm_struct) {
     emit(0, "");
 }
 
-static void emit_impl_message_decode_recursive(FILE *f, lcm_member_t *member, unsigned int dim) {
+static void emit_impl_message_decode_recursive(FILE *f, lcm_member_t *member, unsigned int dim)
+{
     if (dim == g_ptr_array_size(member->dimensions)) {
         emit_end("");
-        emit_start(3+dim, "Message::decode(&mut buffer)");
+        emit_start(3 + dim, "Message::decode(&mut buffer)");
 
-        if (dim == 0 || ((lcm_dimension_t*)g_ptr_array_index(member->dimensions, dim-1))->mode == LCM_CONST) {
+        if (dim == 0 ||
+            ((lcm_dimension_t *) g_ptr_array_index(member->dimensions, dim - 1))->mode ==
+                LCM_CONST) {
             emit_continue("?");
         }
 
         return;
     }
 
-    lcm_dimension_t *dimension = (lcm_dimension_t*) g_ptr_array_index(member->dimensions, dim);
+    lcm_dimension_t *dimension = (lcm_dimension_t *) g_ptr_array_index(member->dimensions, dim);
     switch (dimension->mode) {
     case LCM_CONST: {
         emit_continue("[");
         int size;
         sscanf(dimension->size, "%d", &size);
         for (int i = 0; i != size; ++i) {
-            emit_impl_message_decode_recursive(f, member, dim+1);
+            emit_impl_message_decode_recursive(f, member, dim + 1);
             emit_continue(",");
         }
         emit_end("");
-        emit_start(2+dim, "]");
+        emit_start(2 + dim, "]");
         break;
     }
     case LCM_VAR: {
         emit_end("");
-        emit_start(3+dim, "(0..%s).map(|_| {", dimension->size);
-        emit_impl_message_decode_recursive(f, member, dim+1);
+        emit_start(3 + dim, "(0..%s).map(|_| {", dimension->size);
+        emit_impl_message_decode_recursive(f, member, dim + 1);
         emit_end("");
-        emit_start(3+dim, "}).collect::<Result<_>>()");
-        
-        if (dim == 0 || ((lcm_dimension_t*)g_ptr_array_index(member->dimensions, dim-1))->mode == LCM_CONST) {
+        emit_start(3 + dim, "}).collect::<Result<_>>()");
+
+        if (dim == 0 ||
+            ((lcm_dimension_t *) g_ptr_array_index(member->dimensions, dim - 1))->mode ==
+                LCM_CONST) {
             emit_continue("?");
         }
         break;
@@ -492,7 +524,8 @@ static void emit_impl_message_decode_recursive(FILE *f, lcm_member_t *member, un
     }
 }
 
-static void emit_impl_message_decode(FILE *f, lcm_struct_t *lcm_struct) {
+static void emit_impl_message_decode(FILE *f, lcm_struct_t *lcm_struct)
+{
     char *type_name = make_rust_type_name(lcm_struct->structname);
     unsigned int n_members = g_ptr_array_size(lcm_struct->members);
 
@@ -520,13 +553,14 @@ static void emit_impl_message_decode(FILE *f, lcm_struct_t *lcm_struct) {
     free(type_name);
 }
 
-static void emit_impl_message_size(FILE *f, lcm_struct_t *lcm_struct) {
+static void emit_impl_message_size(FILE *f, lcm_struct_t *lcm_struct)
+{
     emit(1, "fn size(&self) -> usize {");
     emit(2, "0");
     for (unsigned int mind = 0; mind < g_ptr_array_size(lcm_struct->members); mind++) {
         lcm_member_t *member = (lcm_member_t *) g_ptr_array_index(lcm_struct->members, mind);
         int ndim = g_ptr_array_size(member->dimensions);
-        
+
         emit_start(2, "+ self.%s", member->membername);
         if (ndim > 0) {
             for (unsigned int d = 0; d != ndim; ++d) {
@@ -570,8 +604,8 @@ int emit_rust(lcmgen_t *lcmgen)
 
     // Remove mod.rs for each module
     for (unsigned int i = 0; i < g_ptr_array_size(lcmgen->structs); ++i) {
-        lcm_struct_t *lcm_struct = (lcm_struct_t*) g_ptr_array_index(lcmgen->structs, i);
-        char* modfile_name = make_rust_mod_file_name(rust_path, lcm_struct);
+        lcm_struct_t *lcm_struct = (lcm_struct_t *) g_ptr_array_index(lcmgen->structs, i);
+        char *modfile_name = make_rust_mod_file_name(rust_path, lcm_struct);
 
         if (remove(modfile_name) == 0) {
             printf("Removed file: %s\n", modfile_name);
@@ -586,12 +620,12 @@ int emit_rust(lcmgen_t *lcmgen)
 
     // Expose each struct from its mod file
     for (unsigned int i = 0; i < g_ptr_array_size(lcmgen->structs); ++i) {
-        lcm_struct_t* lcm_struct = (lcm_struct_t*) g_ptr_array_index(lcmgen->structs, i);
+        lcm_struct_t *lcm_struct = (lcm_struct_t *) g_ptr_array_index(lcmgen->structs, i);
 
-        char* modfile_name = make_rust_mod_file_name(rust_path, lcm_struct);
+        char *modfile_name = make_rust_mod_file_name(rust_path, lcm_struct);
         make_dirs_for_file(modfile_name);
 
-        FILE* f = fopen(modfile_name, "a");
+        FILE *f = fopen(modfile_name, "a");
         if (f == NULL) {
             printf("Couldn't open %s for writing\n", modfile_name);
             return -1;
@@ -605,13 +639,13 @@ int emit_rust(lcmgen_t *lcmgen)
 
     // Declare and implement each struct
     for (unsigned int i = 0; i < g_ptr_array_size(lcmgen->structs); ++i) {
-        lcm_struct_t* lcm_struct = (lcm_struct_t*) g_ptr_array_index(lcmgen->structs, i);
+        lcm_struct_t *lcm_struct = (lcm_struct_t *) g_ptr_array_index(lcmgen->structs, i);
 
         printf("Emitting code for %s\n", lcm_struct->structname->lctypename);
-        char* file_name = make_rust_file_name(rust_path, lcm_struct);
+        char *file_name = make_rust_file_name(rust_path, lcm_struct);
         // No need to make directories, since the mod.rs file was already created.
 
-        FILE* f = fopen(file_name, "w");
+        FILE *f = fopen(file_name, "w");
         if (f == NULL) {
             printf("Couldn't open %s for writing\n", file_name);
             return -1;

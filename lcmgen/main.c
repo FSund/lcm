@@ -182,10 +182,10 @@ int main(int argc, char *argv[])
     }
 
     if (getopt_get_bool(gopt, "rust")) {
-      did_something = 1;
-      if (emit_rust(lcm)) {
-        printf("An error occurred while emitting Rust code.\n");
-      }
+        did_something = 1;
+        if (emit_rust(lcm)) {
+            printf("An error occurred while emitting Rust code.\n");
+        }
     }
 
     if (did_something == 0) {
