@@ -21,14 +21,14 @@ void setup_rust_options(getopt_t *gopt)
     getopt_add_bool   (gopt, 0, "rust-cargo",      0,      "Emit cargo messages");
 }
 
-static char *dots_to_slashes(const char *s)
-{
-    char *p = strdup(s);
-    for (char *t=p; *t!=0; t++)
-        if (*t == '.')
-            *t = G_DIR_SEPARATOR;
-    return p;
-}
+// static char *dots_to_slashes(const char *s)
+// {
+//     char *p = strdup(s);
+//     for (char *t=p; *t!=0; t++)
+//         if (*t == '.')
+//             *t = G_DIR_SEPARATOR;
+//     return p;
+// }
 
 static char *
 dots_to_double_colons(const char *s)
@@ -499,7 +499,7 @@ static void emit_impl_message_decode(FILE *f, lcm_struct_t *lcm_struct) {
     emit(1, "fn decode(%s: &mut Read) -> Result<Self> {", n_members ? "mut buffer" : "_");
     for (unsigned int mind = 0; mind < n_members; mind++) {
         lcm_member_t *member = (lcm_member_t *) g_ptr_array_index(lcm_struct->members, mind);
-        int ndim = g_ptr_array_size(member->dimensions);
+        // int ndim = g_ptr_array_size(member->dimensions);
 
         emit_start(2, "let %s = ", member->membername);
         emit_impl_message_decode_recursive(f, member, 0);
