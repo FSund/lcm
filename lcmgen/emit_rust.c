@@ -449,7 +449,7 @@ static void emit_impl_message_hash(FILE *f, lcm_struct_t *lcm_struct)
 static void emit_impl_message_encode(FILE *f, lcm_struct_t *lcm_struct)
 {
     unsigned int n_members = g_ptr_array_size(lcm_struct->members);
-    emit(1, "fn encode(&self, %s: &mut Write) -> Result<()> {", n_members ? "mut buffer" : "_");
+    emit(1, "fn encode(&self, %s: &mut dyn Write) -> Result<()> {", n_members ? "mut buffer" : "_");
     for (unsigned int mind = 0; mind < n_members; mind++) {
         lcm_member_t *member = (lcm_member_t *) g_ptr_array_index(lcm_struct->members, mind);
         int ndim = g_ptr_array_size(member->dimensions);
@@ -529,7 +529,7 @@ static void emit_impl_message_decode(FILE *f, lcm_struct_t *lcm_struct)
     char *type_name = make_rust_type_name(lcm_struct->structname);
     unsigned int n_members = g_ptr_array_size(lcm_struct->members);
 
-    emit(1, "fn decode(%s: &mut Read) -> Result<Self> {", n_members ? "mut buffer" : "_");
+    emit(1, "fn decode(%s: &mut dyn Read) -> Result<Self> {", n_members ? "mut buffer" : "_");
     for (unsigned int mind = 0; mind < n_members; mind++) {
         lcm_member_t *member = (lcm_member_t *) g_ptr_array_index(lcm_struct->members, mind);
         // int ndim = g_ptr_array_size(member->dimensions);
