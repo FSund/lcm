@@ -328,7 +328,7 @@ static void emit_struct_def(lcmgen_t *lcmgen, FILE *f, lcm_struct_t *lcm_struct)
                 // This is the first time "use"ing this type
                 char *mapped_tn = map_type_name(lm->type);
                 char *other_pn = dots_to_double_colons(lm->type->package);
-                emit(0, "use %s::%s;", other_pn, mapped_tn);
+                emit(0, "use crate::%s::%s;", other_pn, mapped_tn);
                 free(other_pn);
                 free(mapped_tn);
             }
