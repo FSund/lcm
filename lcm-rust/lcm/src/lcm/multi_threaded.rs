@@ -6,8 +6,8 @@ use std::io::{Error, ErrorKind, Result};
 use std::sync::Mutex;
 use std::time::Duration;
 use super::{LcmSubscription, handler_callback};
-use message::Message;
-use ffi::*;
+use crate::message::Message;
+use crate::ffi::*;
 
 #[cfg(unix)]
 use std::os::unix::io::{AsRawFd, RawFd};
@@ -118,7 +118,7 @@ impl ThreadsafeLcm {
     /// // ...
     /// unsafe { lcm.unsubscribe(subscription); }
     /// ```
-    pub unsafe fn unsubscribe(&self, subscription: LcmSubscription) -> Result<()> {
+    pub unsafe fn unsubscribe(&self, subscription: LcmSubscription) -> Result<()> { unsafe {
         debug!("Unsubscribing handler {:?}", subscription.subscription);
         let result = lcm_unsubscribe(self.lcm, subscription.subscription);
 
@@ -129,7 +129,7 @@ impl ThreadsafeLcm {
             },
             _ => Err(Error::new(ErrorKind::Other, "LCM: Failed to unsubscribe")),
         }
-    }
+    }}
 
     /// Publishes a message on the specified channel.
     ///

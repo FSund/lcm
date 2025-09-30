@@ -9,6 +9,7 @@ repository = "https://github.com/adeschamps/lcm/tree/rust/lcm-rust/lcm"
 license = "LGPL-2.1"
 categories = ["api-bindings", "external-ffi-bindings", "encoding"]
 build = "build.rs"
+edition = "2021"
 
 [dependencies]
 byteorder = "0.5"

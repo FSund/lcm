@@ -8,6 +8,7 @@ homepage = "https://github.com/adeschamps/lcm/tree/rust/lcm-rust/lcm-gen"
 repository = "https://github.com/adeschamps/lcm/tree/rust/lcm-rust/lcm-gen"
 license = "LGPL-2.1"
 categories = ["api-bindings", "external-ffi-bindings", "encoding"]
+edition = "2021"
 
 [dependencies]
 glob = "0.2"

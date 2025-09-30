@@ -1,6 +1,6 @@
 use std::ffi::CStr;
 use std::panic::catch_unwind;
-use ffi::*;
+use crate::ffi::*;
 
 mod single_threaded;
 pub use self::single_threaded::Lcm;

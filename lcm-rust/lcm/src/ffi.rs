@@ -21,7 +21,7 @@ pub type lcm_msg_handler_t = Option<
     ),
 >;
 
-extern "C" {
+unsafe extern "C" {
     pub fn lcm_create(provider: *const c_char) -> *mut lcm_t;
     pub fn lcm_destroy(lcm: *mut lcm_t);
     pub fn lcm_get_fileno(lcm: *mut lcm_t) -> c_int;

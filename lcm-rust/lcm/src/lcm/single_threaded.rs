@@ -5,8 +5,8 @@ use std::ffi::CString;
 use std::io::{Error, ErrorKind, Result};
 use std::time::Duration;
 use super::{LcmSubscription, handler_callback};
-use message::Message;
-use ffi::*;
+use crate::message::Message;
+use crate::ffi::*;
 
 #[cfg(unix)]
 use std::os::unix::io::{AsRawFd, RawFd};
