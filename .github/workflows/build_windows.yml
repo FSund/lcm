@@ -1,0 +1,79 @@
+name: build_windows
+
+on: [workflow_dispatch]
+
+env:
+  CMAKE_FLAGS: -DCMAKE_CXX_FLAGS="-Werror" -DCMAKE_C_FLAGS="-Werror"
+
+jobs:
+
+  windows_msys2:
+    strategy:
+      matrix:
+        os: [windows-2022, windows-2025]
+
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: mingw64
+        update: false
+        install: >-
+          git
+          make
+        pacboy: >-
+          toolchain:p
+          cmake:p
+          glib2:p
+          gtest:p
+          lua:p
+
+    - name: Configure CMake
+      run: cmake -B build ${{env.CMAKE_FLAGS}}
+
+    - name: Build
+      run: cmake --build build
+
+    # - name: Test
+    #   run: ctest --output-on-failure
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: msys2-build-${{ matrix.os }}
+        path: build
+
+  windows_msvc:
+    runs-on: windows-2022
+    env:
+      VCPKG_DEFAULT_BINARY_CACHE: ${{github.workspace}}\vcpkg-cache
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: ${{github.workspace}}\vcpkg-cache
+        key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache
+        restore-keys: vcpkg-cache
+
+    - name: Create cache directory
+      run: mkdir ${{env.VCPKG_DEFAULT_BINARY_CACHE}} -Force
+
+    # Builds dependencies using vcpkg, leveraging cache
+    - name: Run CMake
+      run: cmake --preset=vcpkg-vs-github
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: msvc-build
+        path: build
