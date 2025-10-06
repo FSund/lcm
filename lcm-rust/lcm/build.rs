@@ -74,6 +74,23 @@ fn main() {
         build.define("WIN32", None);
         build.define("_WIN32_WINNT", "0x0601"); // Windows 7+
 
+        let glib = vcpkg::find_package("glib-2.0").unwrap();
+
+        // Add include paths from vcpkg
+        build.include(&glib.include_paths);
+        for lib in glib.libs {
+            println!("cargo:rustc-link-lib={}", lib);
+        }
+
+        // Link the libraries found by vcpkg
+        for link_path in &glib.link_paths {
+            println!("cargo:rustc-link-search=native={}", link_path.display());
+        }
+
+        for lib_name in &glib.found_names {
+            println!("cargo:rustc-link-lib={}", lib_name);
+        }
+
         // Link against Windows libraries
         println!("cargo:rustc-link-lib=ws2_32");
         println!("cargo:rustc-link-lib=iphlpapi");
