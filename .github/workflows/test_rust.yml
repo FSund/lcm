@@ -204,10 +204,4 @@ jobs:
     - name: Test installation with Rust example project
       run: |
         # Build and test the existing Rust example to verify dependency resolution
-        # cd examples/rust
-        # cargo build --verbose
-        # cargo test --verbose
-        
-        # Build and run the example binaries to ensure they compile correctly
-        cd examples/rust
-        cargo run --bin send-message --verbose
+        cargo run --example publisher
