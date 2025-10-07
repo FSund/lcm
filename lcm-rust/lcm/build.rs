@@ -1,6 +1,13 @@
 fn main() {
     // Use pkg-config to find LCM library
-    if let Ok(library) = pkg_config::Config::new().probe("lcm") {
+    let mut config = pkg_config::Config::new();
+    config.atleast_version("1.5.0");
+
+    // Only use static linking on Windows
+    #[cfg(target_os = "windows")]
+    config.statik(true);
+
+    if let Ok(library) = config.probe("lcm") {
         // pkg-config automatically adds the necessary link flags
         for link_path in &library.link_paths {
             println!("cargo:rustc-link-search=native={}", link_path.display());
