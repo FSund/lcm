@@ -66,14 +66,25 @@ jobs:
       run: mkdir ${{env.VCPKG_DEFAULT_BINARY_CACHE}} -Force
 
     # Builds dependencies using vcpkg, leveraging cache
-    - name: Run CMake
-      run: cmake --preset=vcpkg-vs-github
+    # - name: Run CMake
+    #   run: cmake --preset=vcpkg-vs-github
 
-    - name: Build
-      run: cmake --build build --config Release
+    # - name: Build
+    #   run: cmake --build build --config Release
+
+    - name: Install to directory so we can zip it up
+      run: |
+        cmake -B build -S . -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release ${{env.CMAKE_FLAGS}} -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake
+        cmake --build build --config Release --target install
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: msvc-build
         path: build
+
+    - name: Upload Install Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: msvc-install
+        path: install
