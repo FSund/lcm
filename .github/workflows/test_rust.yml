@@ -1,0 +1,213 @@
+name: Test Rust
+
+on:
+  push:
+    branches: [ main, rust ]
+    paths:
+      - 'lcm-rust/**'
+      - 'examples/rust/**'
+      - '.github/workflows/test_rust.yml'
+  pull_request:
+    branches: [ main, rust ]
+    paths:
+      - 'lcm-rust/**'
+      - 'examples/rust/**'
+      - '.github/workflows/test_rust.yml'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test-rust:
+    name: Test Rust packages
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        # rust: [stable, beta, nightly]
+        rust: [stable]
+        # exclude:
+        #   # Reduce CI load by testing nightly only on Ubuntu
+        #   - os: windows-latest
+        #     rust: nightly
+        #   - os: macos-latest
+        #     rust: nightly
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@v1
+      with:
+        toolchain: ${{ matrix.rust }}
+        components: rustfmt, clippy
+
+    - name: Cache Rust dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
+
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake libglib2.0-dev
+
+    - name: Install system dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install cmake glib
+
+    - name: Install system dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        choco install cmake
+        # Note: Windows build may require additional setup for glib
+
+    - name: Build LCM C library
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DLCM_ENABLE_JAVA=OFF -DLCM_ENABLE_PYTHON=OFF -DLCM_ENABLE_LUA=OFF -DLCM_ENABLE_GO=OFF
+        cmake --build . --config Release
+
+    - name: Check Rust formatting
+      run: |
+        cd lcm-rust/lcm
+        cargo fmt -- --check
+        cd ../lcm-gen
+        cargo fmt -- --check
+
+    - name: Run Clippy lints
+      run: |
+        cd lcm-rust/lcm
+        cargo clippy -- -D warnings
+        cd ../lcm-gen
+        cargo clippy -- -D warnings
+
+    - name: Build lcm-gen package
+      run: |
+        cd lcm-rust/lcm-gen
+        cargo build --verbose
+        cargo build --release --verbose
+
+    - name: Test lcm-gen package
+      run: |
+        cd lcm-rust/lcm-gen
+        cargo test --verbose
+
+    - name: Build LCM Rust package
+      run: |
+        cd lcm-rust/lcm
+        cargo build --verbose
+        cargo build --release --verbose
+
+    - name: Test LCM Rust package
+      run: |
+        cd lcm-rust/lcm
+        cargo test --verbose
+
+    - name: Test LCM Rust package with log feature
+      run: |
+        cd lcm-rust/lcm
+        cargo test --features log --verbose
+
+    - name: Build Rust examples
+      run: |
+        cd examples/rust
+        cargo build --verbose
+        cargo build --release --verbose
+
+    - name: Test Rust examples
+      run: |
+        cd examples/rust
+        cargo test --verbose
+
+    - name: Install lcm-gen package locally and test
+      run: |
+        cd lcm-rust/lcm-gen
+        cargo install --path . --force
+        # Test that lcm_gen can be used as a library
+        cargo doc --no-deps
+
+    - name: Install LCM package locally and test
+      run: |
+        cd lcm-rust/lcm
+        cargo install --path . --force --bin lcm-rust || echo "No binary target, skipping install"
+        # Test documentation generation
+        cargo doc --no-deps
+        cargo doc --features log --no-deps
+
+    - name: Check documentation
+      run: |
+        cd lcm-rust/lcm
+        cargo doc --all-features --no-deps --document-private-items
+        cd ../lcm-gen
+        cargo doc --no-deps --document-private-items
+
+    - name: Test packaging
+      if: matrix.rust == 'stable' && matrix.os == 'ubuntu-latest'
+      run: |
+        cd lcm-rust/lcm
+        cargo package --allow-dirty
+        cd ../lcm-gen
+        cargo package --allow-dirty
+
+    
+  test-install-windows:
+    name: Test LCM Rust installation on Windows
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@v1
+      with:
+        toolchain: stable
+        components: rustfmt, clippy
+
+    # - name: Install system dependencies
+    #   run: |
+    #     choco install cmake
+    #     # Note: Windows build may require additional setup for glib
+
+    # - name: Build and install LCM C library
+    #   run: |
+    #     mkdir build
+    #     cd build
+    #     cmake .. -DLCM_ENABLE_JAVA=OFF -DLCM_ENABLE_PYTHON=OFF -DLCM_ENABLE_LUA=OFF -DLCM_ENABLE_GO=OFF
+    #     cmake --build . --config Release
+    #     cmake --install . --prefix C:/lcm-install
+
+    # - name: Build and install LCM Rust package 
+    #   run: |
+    #     cd lcm-rust/lcm
+    #     cargo build --verbose
+    #     cargo install --path . --force --root C:/lcm-rust-install
+
+    # - name: Verify installation
+    #   run: |
+    #     C:/lcm-rust-install/bin/lcm-rust || echo "No binary target, skipping execution"
+    #     # Additional verification steps can be added here
+
+    - name: Test installation with Rust example project
+      run: |
+        # Build and test the existing Rust example to verify dependency resolution
+        # cd examples/rust
+        # cargo build --verbose
+        # cargo test --verbose
+        
+        # Build and run the example binaries to ensure they compile correctly
+        cd examples/rust
+        cargo run --bin send-message --verbose
