@@ -7,7 +7,6 @@ fn main() {
     match Lcm::new() {
         Ok(_lcm) => {
             println!("✅ LCM library is working correctly!");
-            println!("✅ Static linking successful - no external liblcm installation required!");
         }
         Err(e) => {
             println!("❌ Error creating LCM instance: {:?}", e);

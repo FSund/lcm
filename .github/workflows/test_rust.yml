@@ -204,4 +204,5 @@ jobs:
     - name: Test installation with Rust example project
       run: |
         # Build and test the existing Rust example to verify dependency resolution
-        cargo run --example publisher
+        cd lcm-rust/lcm
+        cargo run --example test_lcm_linking
