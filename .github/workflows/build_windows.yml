@@ -27,6 +27,9 @@ jobs:
     - name: Run CMake
       run: cmake --preset=vcpkg-vs-github
 
+    - name: Print CMake Cache
+      run: cmake -LAH --cache build\CMakeCache.txt
+
     # - name: Build
     #   run: cmake --build build --config Release
 
