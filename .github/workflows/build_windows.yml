@@ -25,7 +25,7 @@ jobs:
 
     # Builds dependencies using vcpkg, leveraging cache
     - name: Run CMake
-      run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX=install
+      run: cmake --preset=vcpkg-vs-github
 
     # - name: Build
     #   run: cmake --build build --config Release
