@@ -23,3 +23,16 @@ This crate provides Rust bindings for [LCM](http://lcm-proj.github.io) with a **
 
 To generate Rust code for your LCM message definitions, you must use [this fork] of `lcm-gen`.
 See also the [lcm_gen](https://crates.io/crates/lcm_gen) crate to integrate this into a Cargo build.
+
+### `lcm-gen`
+
+To just build `lcm-gen` from this repository, run:
+
+```sh
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=/usr -DLCM_ENABLE_EXAMPLES=OFF -DLCM_ENABLE_PYTHON=OFF -DLCM_ENABLE_JAVA=OFF -DLCM_ENABLE_LUA=OFF -DLCM_ENABLE_GO=OFF ..
+make -j4
+```
+
+Then you can run `./lcmgen/lcm-gen` on your `.lcm` files to generate Rust code.
