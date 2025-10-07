@@ -24,15 +24,14 @@ jobs:
       run: mkdir ${{env.VCPKG_DEFAULT_BINARY_CACHE}} -Force
 
     # Builds dependencies using vcpkg, leveraging cache
-    # - name: Run CMake
-    #   run: cmake --preset=vcpkg-vs-github
+    - name: Run CMake
+      run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX=install
 
     # - name: Build
     #   run: cmake --build build --config Release
 
-    - name: Install to directory so we can zip it up
+    - name: Install
       run: |
-        cmake -B build -S . -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" ${{env.CMAKE_FLAGS}}
         cmake --build build --config Release --target install
 
     - name: Upload Artifacts
