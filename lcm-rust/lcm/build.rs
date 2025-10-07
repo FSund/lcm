@@ -17,6 +17,9 @@ fn main() {
         }
     } else {
         // Fallback: try to link manually
+        println!(
+            "cargo:warning=Falling back to manual linking. LCM library not found via pkg-config."
+        );
         println!("cargo:rustc-link-lib=lcm");
         println!("cargo:rustc-link-lib=glib-2.0");
     }
