@@ -7,48 +7,6 @@ env:
 
 jobs:
 
-  windows_msys2:
-    strategy:
-      matrix:
-        os: [windows-2022, windows-2025]
-
-    runs-on: ${{ matrix.os }}
-
-    defaults:
-      run:
-        shell: msys2 {0}
-
-    steps:
-    - uses: actions/checkout@v3
-    - uses: msys2/setup-msys2@v2
-      with:
-        msystem: mingw64
-        update: false
-        install: >-
-          git
-          make
-        pacboy: >-
-          toolchain:p
-          cmake:p
-          glib2:p
-          gtest:p
-          lua:p
-
-    - name: Configure CMake
-      run: cmake -B build ${{env.CMAKE_FLAGS}}
-
-    - name: Build
-      run: cmake --build build
-
-    # - name: Test
-    #   run: ctest --output-on-failure
-
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: msys2-build-${{ matrix.os }}
-        path: build
-
   windows_msvc:
     runs-on: windows-2022
     env:
@@ -74,7 +32,7 @@ jobs:
 
     - name: Install to directory so we can zip it up
       run: |
-        cmake -B build -S . -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release ${{env.CMAKE_FLAGS}} -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake
+        cmake -B build -S . -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release ${{env.CMAKE_FLAGS}} -DCMAKE_TOOLCHAIN_FILE=$env{VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake
         cmake --build build --config Release --target install
 
     - name: Upload Artifacts
