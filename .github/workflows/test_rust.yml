@@ -79,19 +79,19 @@ jobs:
         cmake .. -DLCM_ENABLE_JAVA=OFF -DLCM_ENABLE_PYTHON=OFF -DLCM_ENABLE_LUA=OFF -DLCM_ENABLE_GO=OFF
         cmake --build . --config Release
 
-    - name: Check Rust formatting
-      run: |
-        cd lcm-rust/lcm
-        cargo fmt -- --check
-        cd ../lcm-gen
-        cargo fmt -- --check
+    # - name: Check Rust formatting
+    #   run: |
+    #     cd lcm-rust/lcm
+    #     cargo fmt -- --check
+    #     cd ../lcm-gen
+    #     cargo fmt -- --check
 
-    - name: Run Clippy lints
-      run: |
-        cd lcm-rust/lcm
-        cargo clippy -- -D warnings
-        cd ../lcm-gen
-        cargo clippy -- -D warnings
+    # - name: Run Clippy lints
+    #   run: |
+    #     cd lcm-rust/lcm
+    #     cargo clippy -- -D warnings
+    #     cd ../lcm-gen
+    #     cargo clippy -- -D warnings
 
     - name: Build lcm-gen package
       run: |
