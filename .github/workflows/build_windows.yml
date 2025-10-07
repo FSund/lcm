@@ -32,7 +32,7 @@ jobs:
 
     - name: Install to directory so we can zip it up
       run: |
-        cmake -B build -S . -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release ${{env.CMAKE_FLAGS}} -DCMAKE_TOOLCHAIN_FILE=$env{VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake
+        cmake -B build -S . -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake" ${{env.CMAKE_FLAGS}}
         cmake --build build --config Release --target install
 
     - name: Upload Artifacts
