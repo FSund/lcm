@@ -29,7 +29,9 @@ jobs:
 
     # Builds dependencies using vcpkg, leveraging cache
     - name: Run CMake
-      run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX=${{github.workspace}}\install
+      env:
+          VCPKG_DEFAULT_TRIPLET: x64-windows-static
+      run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX=${{github.workspace}}\install -DVCPKG_TARGET_TRIPLET=x64-windows-static
 
     - name: Print CMake Cache
       run: cmake -LAH -B build
