@@ -28,6 +28,18 @@ jobs:
         echo "Cache directory contents:"
         Get-ChildItem ${{ env.VCPKG_DEFAULT_BINARY_CACHE }} -Recurse | Select-Object FullName, Length
 
+    - name: Show vcpkg triplet information
+      run: |
+        echo "Environment variables:"
+        echo "VCPKG_DEFAULT_TRIPLET: ${{ env.VCPKG_DEFAULT_TRIPLET }}"
+        echo "VCPKG_TARGET_TRIPLET: ${{ env.VCPKG_TARGET_TRIPLET }}"
+        echo ""
+        echo "Vcpkg triplet information:"
+        vcpkg help triplet | Select-String -Pattern "default"
+        echo ""
+        echo "Available triplets:"
+        vcpkg help triplet | Select-String -Pattern "x64-windows"
+
     # Builds dependencies using vcpkg, leveraging cache
     - name: Run CMake
       run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX="${{github.workspace}}/install" -DVCPKG_DEFAULT_TRIPLET=${{ env.VCPKG_DEFAULT_TRIPLET }} -DVCPKG_TARGET_TRIPLET=${{ env.VCPKG_TARGET_TRIPLET }}
