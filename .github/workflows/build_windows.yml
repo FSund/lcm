@@ -14,6 +14,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
     - uses: actions/cache@v4
       with:
         path: ${{github.workspace}}\vcpkg-cache
@@ -25,7 +26,7 @@ jobs:
 
     # Builds dependencies using vcpkg, leveraging cache
     - name: Run CMake
-      run: cmake --preset=vcpkg-vs-github
+      run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX=${{github.workspace}}\install ${{env.CMAKE_FLAGS}}
 
     - name: Print CMake Cache
       run: cmake -LAH -B build
