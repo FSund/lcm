@@ -39,6 +39,9 @@ jobs:
         echo ""
         echo "Available triplets:"
         vcpkg help triplet | Select-String -Pattern "x64-windows"
+        echo ""
+        echo "7zip tripllet"
+        vcpkg install 7zip --triplet=""
 
     # Builds dependencies using vcpkg, leveraging cache
     - name: Run CMake
