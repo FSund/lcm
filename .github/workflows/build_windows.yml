@@ -30,7 +30,7 @@ jobs:
 
     # Builds dependencies using vcpkg, leveraging cache
     - name: Run CMake
-      run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX="${{github.workspace}}/install"
+      run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX="${{github.workspace}}/install" -DVCPKG_DEFAULT_TRIPLET=${{ env.VCPKG_DEFAULT_TRIPLET }} -DVCPKG_TARGET_TRIPLET=${{ env.VCPKG_TARGET_TRIPLET }}
 
     - name: Print CMake Cache
       run: cmake -LAH -B build
