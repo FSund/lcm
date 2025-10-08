@@ -3,6 +3,5 @@
     "glib",
     "pkgconf"
   ],
-  "builtin-baseline": "4334d8b4c8916018600212ab4dd4bbdc343065d1",
-  "default-triplet": "x64-windows-static"
+  "builtin-baseline": "4334d8b4c8916018600212ab4dd4bbdc343065d1"
 }
