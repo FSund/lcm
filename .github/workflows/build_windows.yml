@@ -7,31 +7,30 @@ jobs:
   windows_msvc:
     runs-on: windows-2022
     env:
-      VCPKG_DEFAULT_BINARY_CACHE: ${{github.workspace}}\vcpkg-cache
+      VCPKG_DEFAULT_BINARY_CACHE: "${{github.workspace}}/vcpkg-cache"
       VCPKG_DEFAULT_TRIPLET: x64-windows-static
+      VCPKG_TARGET_TRIPLET: x64-windows-static
 
     steps:
     - uses: actions/checkout@v4
 
     - name: Create cache directory
-      run: mkdir ${{env.VCPKG_DEFAULT_BINARY_CACHE}} -Force
+      run: mkdir ${{ env.VCPKG_DEFAULT_BINARY_CACHE }} -Force
 
     - uses: actions/cache@v4
       with:
-        path: ${{github.workspace}}\vcpkg-cache
-        key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache
+        path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+        key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache-${{ env.VCPKG_DEFAULT_TRIPLET }}
         restore-keys: vcpkg-cache
 
     - name: Debug cache contents
       run: |
         echo "Cache directory contents:"
-        Get-ChildItem ${{env.VCPKG_DEFAULT_BINARY_CACHE}} -Recurse | Select-Object FullName, Length
+        Get-ChildItem ${{ env.VCPKG_DEFAULT_BINARY_CACHE }} -Recurse | Select-Object FullName, Length
 
     # Builds dependencies using vcpkg, leveraging cache
     - name: Run CMake
-      env:
-          VCPKG_DEFAULT_TRIPLET: x64-windows-static
-      run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX=${{github.workspace}}\install -DVCPKG_TARGET_TRIPLET=x64-windows-static
+      run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX="${{github.workspace}}/install"
 
     - name: Print CMake Cache
       run: cmake -LAH -B build
