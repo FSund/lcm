@@ -15,14 +15,19 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Create cache directory
+      run: mkdir ${{env.VCPKG_DEFAULT_BINARY_CACHE}} -Force
+
     - uses: actions/cache@v4
       with:
         path: ${{github.workspace}}\vcpkg-cache
         key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache
         restore-keys: vcpkg-cache
 
-    - name: Create cache directory
-      run: mkdir ${{env.VCPKG_DEFAULT_BINARY_CACHE}} -Force
+    - name: Debug cache contents
+      run: |
+        echo "Cache directory contents:"
+        Get-ChildItem ${{env.VCPKG_DEFAULT_BINARY_CACHE}} -Recurse | Select-Object FullName, Length
 
     # Builds dependencies using vcpkg, leveraging cache
     - name: Run CMake
