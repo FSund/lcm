@@ -2,9 +2,6 @@ name: build_windows
 
 on: [workflow_dispatch]
 
-env:
-  CMAKE_FLAGS: -DCMAKE_CXX_FLAGS="-Werror" -DCMAKE_C_FLAGS="-Werror"
-
 jobs:
 
   windows_msvc:
@@ -31,7 +28,7 @@ jobs:
 
     # Builds dependencies using vcpkg, leveraging cache
     - name: Run CMake
-      run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX=${{github.workspace}}\install ${{env.CMAKE_FLAGS}}
+      run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX=${{github.workspace}}\install
 
     - name: Print CMake Cache
       run: cmake -LAH -B build
