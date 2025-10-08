@@ -8,6 +8,7 @@ jobs:
     runs-on: windows-2022
     env:
       VCPKG_DEFAULT_BINARY_CACHE: ${{github.workspace}}\vcpkg-cache
+      VCPKG_DEFAULT_TRIPLET: x64-windows-static
 
     steps:
     - uses: actions/checkout@v4
