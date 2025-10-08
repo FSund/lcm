@@ -18,7 +18,7 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-        key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache-x64-windows
+        key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache
         restore-keys: vcpkg-cache
 
     # Builds dependencies using vcpkg, leveraging cache
