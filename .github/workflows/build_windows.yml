@@ -6,8 +6,15 @@ jobs:
 
   windows_msvc:
     runs-on: windows-2022
+
+    strategy:
+      fail-fast: false
+      matrix:
+        library_type: [static, shared]
+
     env:
       VCPKG_DEFAULT_BINARY_CACHE: "${{github.workspace}}/vcpkg-cache"
+      CMAKE_ARGS: ${{ matrix.library_type == 'static' && '-DBUILD_SHARED_LIBS=OFF -DVCPKG_DEFAULT_TRIPLET=x64-windows-static -DVCPKG_TARGET_TRIPLET=x64-windows-static -DVCPKG_HOST_TRIPLET=x64-windows-static' || '' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -18,25 +25,22 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-        key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache-x64-windows-static
+        key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache-x64-windows-${{ matrix.library_type }}
         restore-keys: vcpkg-cache
 
     # Builds dependencies using vcpkg, leveraging cache
     - name: Run CMake
-      run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX="${{github.workspace}}/install" -DBUILD_SHARED_LIBS=OFF -DVCPKG_DEFAULT_TRIPLET=x64-windows-static -DVCPKG_TARGET_TRIPLET=x64-windows-static -DVCPKG_HOST_TRIPLET=x64-windows-static
+      run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX="${{github.workspace}}/install" ${{ env.CMAKE_ARGS }}
 
     # Manually save cache in case later steps crashes
     - uses: actions/cache/save@v4
       id: cache
       with:
         path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-        key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache-x64-windows-static
+        key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache-x64-windows-${{ matrix.library_type }}
 
     - name: Print CMake Cache
       run: cmake -LAH -B build
-
-    # - name: Build
-    #   run: cmake --build build --config Release
 
     - name: Install
       run: |
@@ -45,11 +49,11 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: msvc-build
+        name: msvc-build-${{ matrix.library_type }}
         path: build
 
     - name: Upload Install Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: msvc-install
+        name: msvc-install-${{ matrix.library_type }}
         path: install
