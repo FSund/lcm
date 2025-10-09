@@ -12,7 +12,9 @@ if (NOT LCM_PIP_BUILD)
     OUTPUT_VARIABLE PYTHON_SITE
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-    set(PYTHON_INSTALL_DIR ${PYTHON_SITE}/lcm)
+    # Normalize path separators to avoid CMake escape sequence issues
+    set(PYTHON_INSTALL_DIR "${PYTHON_SITE}/lcm")
+    file(TO_CMAKE_PATH "${PYTHON_INSTALL_DIR}" PYTHON_INSTALL_DIR)
 else()
     set(PYTHON_INSTALL_DIR lcm)
 endif()

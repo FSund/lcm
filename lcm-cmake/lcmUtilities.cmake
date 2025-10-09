@@ -490,6 +490,8 @@ function(lcm_install_python)
         print(sc.get_path('platlib'))"
       OUTPUT_VARIABLE _DESTINATION
       OUTPUT_STRIP_TRAILING_WHITESPACE)
+    # Normalize path separators to avoid CMake escape sequence issues
+    file(TO_CMAKE_PATH "${_DESTINATION}" _DESTINATION)
   endif()
   if(NOT DEFINED _RELATIVE_PATH)
     set(_RELATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}")
