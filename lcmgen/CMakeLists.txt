@@ -44,7 +44,17 @@ if(_uses_sanitizers AND NOT LCM_SANITIZE_LCMGEN)
 endif()
 
 add_executable(lcm-gen ${lcm-gen_sources})
+
+# Use GLib2 target (works better with vcpkg and Windows)
 target_link_libraries(lcm-gen PRIVATE GLib2::glib)
+
+# Add Windows libraries for static linking
+if(WIN32)
+  target_link_libraries(lcm-gen PRIVATE 
+    wsock32 ws2_32 winmm kernel32 user32 gdi32 winspool shell32 
+    ole32 oleaut32 uuid comdlg32 advapi32
+  )
+endif()
 
 target_include_directories(${lcm_lib} lcm-gen PRIVATE ${lcm_SOURCE_DIR})
 

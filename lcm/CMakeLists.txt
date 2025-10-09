@@ -67,13 +67,19 @@ foreach(lcm_lib lcm lcm-static)
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   )
 
-  target_link_libraries(${lcm_lib} PRIVATE
-    GLib2::glib
-    ${CMAKE_THREAD_LIBS_INIT}
+  # Use GLib2 target (works better with vcpkg and Windows)
+  # Use PUBLIC for glib so it propagates to dependent targets like lcm-python
+  target_link_libraries(${lcm_lib} 
+    PUBLIC GLib2::glib
+    PRIVATE ${CMAKE_THREAD_LIBS_INIT}
   )
 
   if(WIN32)
-    target_link_libraries(${lcm_lib} PRIVATE wsock32 ws2_32)
+    # Add all Windows libraries that may be needed for static linking
+    target_link_libraries(${lcm_lib} PRIVATE 
+      wsock32 ws2_32 winmm kernel32 user32 gdi32 winspool shell32 
+      ole32 oleaut32 uuid comdlg32 advapi32
+    )
   endif()
 endforeach()
 

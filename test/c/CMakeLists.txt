@@ -10,7 +10,16 @@ add_executable(test-c-memq_test memq_test.cpp common.c)
 target_link_libraries(test-c-memq_test ${test_c_libs})
 
 add_executable(test-c-eventlog_test eventlog_test.cpp common.c)
-target_link_libraries(test-c-eventlog_test GLib2::glib ${test_c_libs})
+# Use GLib2 target (works better with vcpkg and Windows)
+target_link_libraries(test-c-eventlog_test PRIVATE GLib2::glib ${test_c_libs})
+
+# Add Windows libraries for static linking
+if(WIN32)
+  target_link_libraries(test-c-eventlog_test PRIVATE 
+    wsock32 ws2_32 winmm kernel32 user32 gdi32 winspool shell32 
+    ole32 oleaut32 uuid comdlg32 advapi32
+  )
+endif()
 
 add_executable(test-c-udpm_test udpm_test.cpp common.c)
 target_link_libraries(test-c-udpm_test ${test_c_libs})

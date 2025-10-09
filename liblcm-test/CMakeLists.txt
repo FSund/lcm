@@ -5,9 +5,15 @@ add_executable(lcm-source lcm-source.c)
 target_link_libraries(lcm-source lcm-static ${lcm-winport})
 
 add_executable(lcm-tester lcm-tester.c)
-target_link_libraries(lcm-tester lcm-static GLib2::glib)
+# Use GLib2 target (works better with vcpkg and Windows)
+target_link_libraries(lcm-tester PRIVATE lcm-static GLib2::glib)
+
+# Add Windows libraries for static linking
 if(WIN32)
-  target_link_libraries(lcm-tester wsock32 ws2_32)
+  target_link_libraries(lcm-tester PRIVATE 
+    wsock32 ws2_32 winmm kernel32 user32 gdi32 winspool shell32 
+    ole32 oleaut32 uuid comdlg32 advapi32
+  )
 endif()
 
 add_executable(lcm-example lcm-example.c)
@@ -17,13 +23,40 @@ if(WIN32)
 endif()
 
 add_executable(lcm-logfilter lcm-logfilter.c)
-target_link_libraries(lcm-logfilter lcm-static ${lcm-winport} GLib2::glib)
+# Use GLib2 target (works better with vcpkg and Windows)
+target_link_libraries(lcm-logfilter PRIVATE lcm-static ${lcm-winport} GLib2::glib)
+
+# Add Windows libraries for static linking
+if(WIN32)
+  target_link_libraries(lcm-logfilter PRIVATE 
+    wsock32 ws2_32 winmm kernel32 user32 gdi32 winspool shell32 
+    ole32 oleaut32 uuid comdlg32 advapi32
+  )
+endif()
 
 add_executable(lcm-buftest-receiver buftest-receiver.c)
-target_link_libraries(lcm-buftest-receiver lcm-static GLib2::glib)
+# Use GLib2 target (works better with vcpkg and Windows)
+target_link_libraries(lcm-buftest-receiver PRIVATE lcm-static GLib2::glib)
+
+# Add Windows libraries for static linking
+if(WIN32)
+  target_link_libraries(lcm-buftest-receiver PRIVATE 
+    wsock32 ws2_32 winmm kernel32 user32 gdi32 winspool shell32 
+    ole32 oleaut32 uuid comdlg32 advapi32
+  )
+endif()
 
 add_executable(lcm-buftest-sender buftest-sender.c)
-target_link_libraries(lcm-buftest-sender lcm-static GLib2::glib)
+# Use GLib2 target (works better with vcpkg and Windows)
+target_link_libraries(lcm-buftest-sender PRIVATE lcm-static GLib2::glib)
+
+# Add Windows libraries for static linking
+if(WIN32)
+  target_link_libraries(lcm-buftest-sender PRIVATE 
+    wsock32 ws2_32 winmm kernel32 user32 gdi32 winspool shell32 
+    ole32 oleaut32 uuid comdlg32 advapi32
+  )
+endif()
 
 install(TARGETS
   lcm-sink

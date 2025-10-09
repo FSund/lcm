@@ -63,6 +63,14 @@ else()
   target_link_libraries(lcm-python PRIVATE
     ${Python_LIBRARIES}
   )
+  
+  # Add Windows libraries for static linking
+  if(WIN32)
+    target_link_libraries(lcm-python PRIVATE 
+      wsock32 ws2_32 winmm kernel32 user32 gdi32 winspool shell32 
+      ole32 oleaut32 uuid comdlg32 advapi32
+    )
+  endif()
 endif()
 
 install(TARGETS lcm-python

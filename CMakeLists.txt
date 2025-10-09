@@ -24,7 +24,43 @@ if(CMAKE_VERSION VERSION_LESS 3.7)
   list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/3.7")
 endif()
 
-find_package(GLib2 REQUIRED)
+# Find glib using pkg-config with proper static linking support
+find_package(PkgConfig REQUIRED)
+
+# Set pkg-config to use static linking when building static libraries
+if(NOT BUILD_SHARED_LIBS)
+  set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH ON)
+  set(ENV{PKG_CONFIG_STATIC} "1")
+endif()
+
+pkg_check_modules(PC_GLIB REQUIRED glib-2.0)
+
+# Debug: Print pkg-config results
+message(STATUS "GLib pkg-config results:")
+message(STATUS "  Libraries: ${PC_GLIB_LIBRARIES}")
+message(STATUS "  Library dirs: ${PC_GLIB_LIBRARY_DIRS}")
+message(STATUS "  Include dirs: ${PC_GLIB_INCLUDE_DIRS}")
+message(STATUS "  Static libs: ${PC_GLIB_STATIC_LIBRARIES}")
+
+# Create GLib2::glib target using pkg-config results
+if(NOT TARGET GLib2::glib)
+  add_library(GLib2::glib INTERFACE IMPORTED)
+  
+  # Use static libraries list if available, otherwise fallback to regular libraries
+  set(GLIB_LINK_LIBS "${PC_GLIB_LIBRARIES}")
+  if(NOT BUILD_SHARED_LIBS AND PC_GLIB_STATIC_LIBRARIES)
+    set(GLIB_LINK_LIBS "${PC_GLIB_STATIC_LIBRARIES}")
+  endif()
+  
+  set_target_properties(GLib2::glib PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${PC_GLIB_INCLUDE_DIRS}"
+    INTERFACE_COMPILE_OPTIONS "${PC_GLIB_CFLAGS_OTHER}"
+    INTERFACE_LINK_LIBRARIES "${GLIB_LINK_LIBS}"
+    INTERFACE_LINK_DIRECTORIES "${PC_GLIB_LIBRARY_DIRS}"
+  )
+  
+  message(STATUS "Created GLib2::glib target with libraries: ${GLIB_LINK_LIBS}")
+endif()
 
 # Configuration and utility functions
 include(lcm-cmake/config.cmake NO_POLICY_SCOPE)
