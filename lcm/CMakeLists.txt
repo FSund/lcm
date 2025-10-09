@@ -67,13 +67,27 @@ foreach(lcm_lib lcm lcm-static)
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   )
 
-  target_link_libraries(${lcm_lib} PRIVATE
-    GLib2::glib
-    ${CMAKE_THREAD_LIBS_INIT}
-  )
+  # Use pkg-config libraries for better static linking support
+  if(GLIB_FOUND)
+    target_link_libraries(${lcm_lib} PRIVATE
+      ${GLIB_LIBRARIES}
+      ${CMAKE_THREAD_LIBS_INIT}
+    )
+    target_include_directories(${lcm_lib} PRIVATE ${GLIB_INCLUDE_DIRS})
+    target_compile_options(${lcm_lib} PRIVATE ${GLIB_CFLAGS_OTHER})
+  else()
+    target_link_libraries(${lcm_lib} PRIVATE
+      GLib2::glib
+      ${CMAKE_THREAD_LIBS_INIT}
+    )
+  endif()
 
   if(WIN32)
-    target_link_libraries(${lcm_lib} PRIVATE wsock32 ws2_32)
+    # Add all Windows libraries that may be needed for static linking
+    target_link_libraries(${lcm_lib} PRIVATE 
+      wsock32 ws2_32 winmm kernel32 user32 gdi32 winspool shell32 
+      ole32 oleaut32 uuid comdlg32 advapi32
+    )
   endif()
 endforeach()
 

@@ -44,7 +44,23 @@ if(_uses_sanitizers AND NOT LCM_SANITIZE_LCMGEN)
 endif()
 
 add_executable(lcm-gen ${lcm-gen_sources})
-target_link_libraries(lcm-gen PRIVATE GLib2::glib)
+
+# Use pkg-config libraries for better static linking support
+if(GLIB_FOUND)
+  target_link_libraries(lcm-gen PRIVATE ${GLIB_LIBRARIES})
+  target_include_directories(lcm-gen PRIVATE ${GLIB_INCLUDE_DIRS})
+  target_compile_options(lcm-gen PRIVATE ${GLIB_CFLAGS_OTHER})
+else()
+  target_link_libraries(lcm-gen PRIVATE GLib2::glib)
+endif()
+
+# Add Windows libraries for static linking
+if(WIN32)
+  target_link_libraries(lcm-gen PRIVATE 
+    wsock32 ws2_32 winmm kernel32 user32 gdi32 winspool shell32 
+    ole32 oleaut32 uuid comdlg32 advapi32
+  )
+endif()
 
 target_include_directories(${lcm_lib} lcm-gen PRIVATE ${lcm_SOURCE_DIR})
 

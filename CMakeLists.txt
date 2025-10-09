@@ -24,7 +24,14 @@ if(CMAKE_VERSION VERSION_LESS 3.7)
   list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/3.7")
 endif()
 
-find_package(GLib2 REQUIRED)
+# Use pkg-config for better static linking support with vcpkg
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GLIB REQUIRED glib-2.0)
+
+# Fallback to custom FindGLib2 if pkg-config fails
+if(NOT GLIB_FOUND)
+  find_package(GLib2 REQUIRED)
+endif()
 
 # Configuration and utility functions
 include(lcm-cmake/config.cmake NO_POLICY_SCOPE)
