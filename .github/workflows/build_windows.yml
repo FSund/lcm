@@ -15,6 +15,7 @@ jobs:
     env:
       VCPKG_DEFAULT_BINARY_CACHE: "${{github.workspace}}/vcpkg-cache"
       CMAKE_ARGS: ${{ matrix.library_type == 'static' && '-DBUILD_SHARED_LIBS=OFF -DVCPKG_DEFAULT_TRIPLET=x64-windows-static -DVCPKG_TARGET_TRIPLET=x64-windows-static -DVCPKG_HOST_TRIPLET=x64-windows-static' || '' }}
+      TRIPLET: ${{ matrix.library_type == 'static' && 'x64-windows-static' || 'x64-windows' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -25,7 +26,7 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-        key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache-x64-windows-${{ matrix.library_type }}
+        key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache-${{ env.TRIPLET }}
         restore-keys: vcpkg-cache
 
     # Builds dependencies using vcpkg, leveraging cache
@@ -37,7 +38,7 @@ jobs:
       id: cache
       with:
         path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-        key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache-x64-windows-${{ matrix.library_type }}
+        key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache-${{ env.TRIPLET }}
 
     - name: Print CMake Cache
       run: cmake -LAH -B build
@@ -49,11 +50,11 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: msvc-build-${{ matrix.library_type }}
+        name: msvc-build-${{ env.TRIPLET }}
         path: build
 
     - name: Upload Install Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: msvc-install-${{ matrix.library_type }}
+        name: msvc-install-${{ env.TRIPLET }}
         path: install
