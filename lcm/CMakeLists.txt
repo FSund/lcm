@@ -68,9 +68,10 @@ foreach(lcm_lib lcm lcm-static)
   )
 
   # Use GLib2 target (works better with vcpkg and Windows)
-  target_link_libraries(${lcm_lib} PRIVATE
-    GLib2::glib
-    ${CMAKE_THREAD_LIBS_INIT}
+  # Use PUBLIC for glib so it propagates to dependent targets like lcm-python
+  target_link_libraries(${lcm_lib} 
+    PUBLIC GLib2::glib
+    PRIVATE ${CMAKE_THREAD_LIBS_INIT}
   )
 
   if(WIN32)

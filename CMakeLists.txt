@@ -35,16 +35,31 @@ endif()
 
 pkg_check_modules(PC_GLIB REQUIRED glib-2.0)
 
+# Debug: Print pkg-config results
+message(STATUS "GLib pkg-config results:")
+message(STATUS "  Libraries: ${PC_GLIB_LIBRARIES}")
+message(STATUS "  Library dirs: ${PC_GLIB_LIBRARY_DIRS}")
+message(STATUS "  Include dirs: ${PC_GLIB_INCLUDE_DIRS}")
+message(STATUS "  Static libs: ${PC_GLIB_STATIC_LIBRARIES}")
+
 # Create GLib2::glib target using pkg-config results
 if(NOT TARGET GLib2::glib)
   add_library(GLib2::glib INTERFACE IMPORTED)
   
+  # Use static libraries list if available, otherwise fallback to regular libraries
+  set(GLIB_LINK_LIBS "${PC_GLIB_LIBRARIES}")
+  if(NOT BUILD_SHARED_LIBS AND PC_GLIB_STATIC_LIBRARIES)
+    set(GLIB_LINK_LIBS "${PC_GLIB_STATIC_LIBRARIES}")
+  endif()
+  
   set_target_properties(GLib2::glib PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${PC_GLIB_INCLUDE_DIRS}"
     INTERFACE_COMPILE_OPTIONS "${PC_GLIB_CFLAGS_OTHER}"
-    INTERFACE_LINK_LIBRARIES "${PC_GLIB_LIBRARIES}"
+    INTERFACE_LINK_LIBRARIES "${GLIB_LINK_LIBS}"
     INTERFACE_LINK_DIRECTORIES "${PC_GLIB_LIBRARY_DIRS}"
   )
+  
+  message(STATUS "Created GLib2::glib target with libraries: ${GLIB_LINK_LIBS}")
 endif()
 
 # Configuration and utility functions
