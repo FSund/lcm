@@ -20,25 +20,25 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Create cache directory
-      run: mkdir ${{ env.VCPKG_DEFAULT_BINARY_CACHE }} -Force
-
-    - uses: actions/cache@v4
+    - name: Restore Vcpkg Cache
+      uses: actions/cache/restore@v4
+      id: cache-restore
       with:
         path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
         key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache-${{ env.TRIPLET }}
-        restore-keys: vcpkg-cache
 
     # Builds dependencies using vcpkg, leveraging cache
     - name: Run CMake
       run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX="${{github.workspace}}/install" ${{ env.CMAKE_ARGS }}
 
-    # Manually save cache in case later steps crashes
-    - uses: actions/cache/save@v4
-      id: cache
+    # Always save cache in case later steps crashes
+    - name: Save Vcpkg Cache
+      uses: actions/cache/save@v4
+      id: cache-save
+      if: always() && steps.cache-restore.outputs.cache-hit != 'true'
       with:
+        key: ${{ steps.cache-restore.outputs.cache-primary-key }}
         path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-        key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache-${{ env.TRIPLET }}
 
     - name: Print CMake Cache
       run: cmake -LAH -B build
