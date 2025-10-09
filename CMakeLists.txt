@@ -24,13 +24,27 @@ if(CMAKE_VERSION VERSION_LESS 3.7)
   list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/3.7")
 endif()
 
-# Use pkg-config for better static linking support with vcpkg
+# Find glib using pkg-config with proper static linking support
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(GLIB REQUIRED glib-2.0)
 
-# Fallback to custom FindGLib2 if pkg-config fails
-if(NOT GLIB_FOUND)
-  find_package(GLib2 REQUIRED)
+# Set pkg-config to use static linking when building static libraries
+if(NOT BUILD_SHARED_LIBS)
+  set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH ON)
+  set(ENV{PKG_CONFIG_STATIC} "1")
+endif()
+
+pkg_check_modules(PC_GLIB REQUIRED glib-2.0)
+
+# Create GLib2::glib target using pkg-config results
+if(NOT TARGET GLib2::glib)
+  add_library(GLib2::glib INTERFACE IMPORTED)
+  
+  set_target_properties(GLib2::glib PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${PC_GLIB_INCLUDE_DIRS}"
+    INTERFACE_COMPILE_OPTIONS "${PC_GLIB_CFLAGS_OTHER}"
+    INTERFACE_LINK_LIBRARIES "${PC_GLIB_LIBRARIES}"
+    INTERFACE_LINK_DIRECTORIES "${PC_GLIB_LIBRARY_DIRS}"
+  )
 endif()
 
 # Configuration and utility functions

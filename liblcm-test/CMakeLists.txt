@@ -5,14 +5,8 @@ add_executable(lcm-source lcm-source.c)
 target_link_libraries(lcm-source lcm-static ${lcm-winport})
 
 add_executable(lcm-tester lcm-tester.c)
-# Use pkg-config libraries for better static linking support
-if(GLIB_FOUND)
-  target_link_libraries(lcm-tester PRIVATE lcm-static ${GLIB_LIBRARIES})
-  target_include_directories(lcm-tester PRIVATE ${GLIB_INCLUDE_DIRS})
-  target_compile_options(lcm-tester PRIVATE ${GLIB_CFLAGS_OTHER})
-else()
-  target_link_libraries(lcm-tester PRIVATE lcm-static GLib2::glib)
-endif()
+# Use GLib2 target (works better with vcpkg and Windows)
+target_link_libraries(lcm-tester PRIVATE lcm-static GLib2::glib)
 
 # Add Windows libraries for static linking
 if(WIN32)
@@ -29,14 +23,8 @@ if(WIN32)
 endif()
 
 add_executable(lcm-logfilter lcm-logfilter.c)
-# Use pkg-config libraries for better static linking support
-if(GLIB_FOUND)
-  target_link_libraries(lcm-logfilter PRIVATE lcm-static ${lcm-winport} ${GLIB_LIBRARIES})
-  target_include_directories(lcm-logfilter PRIVATE ${GLIB_INCLUDE_DIRS})
-  target_compile_options(lcm-logfilter PRIVATE ${GLIB_CFLAGS_OTHER})
-else()
-  target_link_libraries(lcm-logfilter PRIVATE lcm-static ${lcm-winport} GLib2::glib)
-endif()
+# Use GLib2 target (works better with vcpkg and Windows)
+target_link_libraries(lcm-logfilter PRIVATE lcm-static ${lcm-winport} GLib2::glib)
 
 # Add Windows libraries for static linking
 if(WIN32)
@@ -47,14 +35,8 @@ if(WIN32)
 endif()
 
 add_executable(lcm-buftest-receiver buftest-receiver.c)
-# Use pkg-config libraries for better static linking support
-if(GLIB_FOUND)
-  target_link_libraries(lcm-buftest-receiver PRIVATE lcm-static ${GLIB_LIBRARIES})
-  target_include_directories(lcm-buftest-receiver PRIVATE ${GLIB_INCLUDE_DIRS})
-  target_compile_options(lcm-buftest-receiver PRIVATE ${GLIB_CFLAGS_OTHER})
-else()
-  target_link_libraries(lcm-buftest-receiver PRIVATE lcm-static GLib2::glib)
-endif()
+# Use GLib2 target (works better with vcpkg and Windows)
+target_link_libraries(lcm-buftest-receiver PRIVATE lcm-static GLib2::glib)
 
 # Add Windows libraries for static linking
 if(WIN32)
@@ -65,14 +47,8 @@ if(WIN32)
 endif()
 
 add_executable(lcm-buftest-sender buftest-sender.c)
-# Use pkg-config libraries for better static linking support
-if(GLIB_FOUND)
-  target_link_libraries(lcm-buftest-sender PRIVATE lcm-static ${GLIB_LIBRARIES})
-  target_include_directories(lcm-buftest-sender PRIVATE ${GLIB_INCLUDE_DIRS})
-  target_compile_options(lcm-buftest-sender PRIVATE ${GLIB_CFLAGS_OTHER})
-else()
-  target_link_libraries(lcm-buftest-sender PRIVATE lcm-static GLib2::glib)
-endif()
+# Use GLib2 target (works better with vcpkg and Windows)
+target_link_libraries(lcm-buftest-sender PRIVATE lcm-static GLib2::glib)
 
 # Add Windows libraries for static linking
 if(WIN32)

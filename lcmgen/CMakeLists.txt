@@ -45,14 +45,8 @@ endif()
 
 add_executable(lcm-gen ${lcm-gen_sources})
 
-# Use pkg-config libraries for better static linking support
-if(GLIB_FOUND)
-  target_link_libraries(lcm-gen PRIVATE ${GLIB_LIBRARIES})
-  target_include_directories(lcm-gen PRIVATE ${GLIB_INCLUDE_DIRS})
-  target_compile_options(lcm-gen PRIVATE ${GLIB_CFLAGS_OTHER})
-else()
-  target_link_libraries(lcm-gen PRIVATE GLib2::glib)
-endif()
+# Use GLib2 target (works better with vcpkg and Windows)
+target_link_libraries(lcm-gen PRIVATE GLib2::glib)
 
 # Add Windows libraries for static linking
 if(WIN32)

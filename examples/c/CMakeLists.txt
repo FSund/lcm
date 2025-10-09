@@ -34,14 +34,8 @@ add_executable(listener-async "listener-async.c")
 lcm_target_link_libraries(listener-async example_messages-c ${LCM_NAMESPACE}lcm)
 
 add_executable(listener-glib "listener-glib.c")
-# Use pkg-config libraries for better static linking support
-if(GLIB_FOUND)
-  lcm_target_link_libraries(listener-glib example_messages-c ${LCM_NAMESPACE}lcm ${GLIB_LIBRARIES})
-  target_include_directories(listener-glib PRIVATE ${GLIB_INCLUDE_DIRS})
-  target_compile_options(listener-glib PRIVATE ${GLIB_CFLAGS_OTHER})
-else()
-  lcm_target_link_libraries(listener-glib example_messages-c ${LCM_NAMESPACE}lcm GLib2::glib)
-endif()
+# Use GLib2 target (works better with vcpkg and Windows)
+lcm_target_link_libraries(listener-glib example_messages-c ${LCM_NAMESPACE}lcm GLib2::glib)
 
 # Add Windows libraries for static linking
 if(WIN32)
