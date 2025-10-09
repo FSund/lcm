@@ -23,7 +23,14 @@ jobs:
 
     # Builds dependencies using vcpkg, leveraging cache
     - name: Run CMake
-      run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX="${{github.workspace}}/install" -DVCPKG_DEFAULT_TRIPLET=x64-windows-static -DVCPKG_TARGET_TRIPLET=x64-windows-static -DVCPKG_HOST_TRIPLET=x64-windows-static
+      run: cmake --preset=vcpkg-vs-github -DCMAKE_INSTALL_PREFIX="${{github.workspace}}/install" -DBUILD_SHARED_LIBS=OFF -DVCPKG_DEFAULT_TRIPLET=x64-windows-static -DVCPKG_TARGET_TRIPLET=x64-windows-static -DVCPKG_HOST_TRIPLET=x64-windows-static
+
+    # Manually save cache in case later steps crashes
+    - uses: actions/cache/save@v4
+      id: cache
+      with:
+        path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+        key: ${{ hashFiles('vcpkg.json') }}-vcpkg-cache-x64-windows-static
 
     - name: Print CMake Cache
       run: cmake -LAH -B build
