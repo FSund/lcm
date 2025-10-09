@@ -5,9 +5,21 @@ add_executable(lcm-source lcm-source.c)
 target_link_libraries(lcm-source lcm-static ${lcm-winport})
 
 add_executable(lcm-tester lcm-tester.c)
-target_link_libraries(lcm-tester lcm-static GLib2::glib)
+# Use pkg-config libraries for better static linking support
+if(GLIB_FOUND)
+  target_link_libraries(lcm-tester lcm-static ${GLIB_LIBRARIES})
+  target_include_directories(lcm-tester PRIVATE ${GLIB_INCLUDE_DIRS})
+  target_compile_options(lcm-tester PRIVATE ${GLIB_CFLAGS_OTHER})
+else()
+  target_link_libraries(lcm-tester lcm-static GLib2::glib)
+endif()
+
+# Add Windows libraries for static linking
 if(WIN32)
-  target_link_libraries(lcm-tester wsock32 ws2_32)
+  target_link_libraries(lcm-tester PRIVATE 
+    wsock32 ws2_32 winmm kernel32 user32 gdi32 winspool shell32 
+    ole32 oleaut32 uuid comdlg32 advapi32
+  )
 endif()
 
 add_executable(lcm-example lcm-example.c)
@@ -17,13 +29,58 @@ if(WIN32)
 endif()
 
 add_executable(lcm-logfilter lcm-logfilter.c)
-target_link_libraries(lcm-logfilter lcm-static ${lcm-winport} GLib2::glib)
+# Use pkg-config libraries for better static linking support
+if(GLIB_FOUND)
+  target_link_libraries(lcm-logfilter lcm-static ${lcm-winport} ${GLIB_LIBRARIES})
+  target_include_directories(lcm-logfilter PRIVATE ${GLIB_INCLUDE_DIRS})
+  target_compile_options(lcm-logfilter PRIVATE ${GLIB_CFLAGS_OTHER})
+else()
+  target_link_libraries(lcm-logfilter lcm-static ${lcm-winport} GLib2::glib)
+endif()
+
+# Add Windows libraries for static linking
+if(WIN32)
+  target_link_libraries(lcm-logfilter PRIVATE 
+    wsock32 ws2_32 winmm kernel32 user32 gdi32 winspool shell32 
+    ole32 oleaut32 uuid comdlg32 advapi32
+  )
+endif()
 
 add_executable(lcm-buftest-receiver buftest-receiver.c)
-target_link_libraries(lcm-buftest-receiver lcm-static GLib2::glib)
+# Use pkg-config libraries for better static linking support
+if(GLIB_FOUND)
+  target_link_libraries(lcm-buftest-receiver lcm-static ${GLIB_LIBRARIES})
+  target_include_directories(lcm-buftest-receiver PRIVATE ${GLIB_INCLUDE_DIRS})
+  target_compile_options(lcm-buftest-receiver PRIVATE ${GLIB_CFLAGS_OTHER})
+else()
+  target_link_libraries(lcm-buftest-receiver lcm-static GLib2::glib)
+endif()
+
+# Add Windows libraries for static linking
+if(WIN32)
+  target_link_libraries(lcm-buftest-receiver PRIVATE 
+    wsock32 ws2_32 winmm kernel32 user32 gdi32 winspool shell32 
+    ole32 oleaut32 uuid comdlg32 advapi32
+  )
+endif()
 
 add_executable(lcm-buftest-sender buftest-sender.c)
-target_link_libraries(lcm-buftest-sender lcm-static GLib2::glib)
+# Use pkg-config libraries for better static linking support
+if(GLIB_FOUND)
+  target_link_libraries(lcm-buftest-sender lcm-static ${GLIB_LIBRARIES})
+  target_include_directories(lcm-buftest-sender PRIVATE ${GLIB_INCLUDE_DIRS})
+  target_compile_options(lcm-buftest-sender PRIVATE ${GLIB_CFLAGS_OTHER})
+else()
+  target_link_libraries(lcm-buftest-sender lcm-static GLib2::glib)
+endif()
+
+# Add Windows libraries for static linking
+if(WIN32)
+  target_link_libraries(lcm-buftest-sender PRIVATE 
+    wsock32 ws2_32 winmm kernel32 user32 gdi32 winspool shell32 
+    ole32 oleaut32 uuid comdlg32 advapi32
+  )
+endif()
 
 install(TARGETS
   lcm-sink

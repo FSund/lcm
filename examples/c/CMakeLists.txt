@@ -34,7 +34,22 @@ add_executable(listener-async "listener-async.c")
 lcm_target_link_libraries(listener-async example_messages-c ${LCM_NAMESPACE}lcm)
 
 add_executable(listener-glib "listener-glib.c")
-lcm_target_link_libraries(listener-glib example_messages-c ${LCM_NAMESPACE}lcm GLib2::glib)
+# Use pkg-config libraries for better static linking support
+if(GLIB_FOUND)
+  lcm_target_link_libraries(listener-glib example_messages-c ${LCM_NAMESPACE}lcm ${GLIB_LIBRARIES})
+  target_include_directories(listener-glib PRIVATE ${GLIB_INCLUDE_DIRS})
+  target_compile_options(listener-glib PRIVATE ${GLIB_CFLAGS_OTHER})
+else()
+  lcm_target_link_libraries(listener-glib example_messages-c ${LCM_NAMESPACE}lcm GLib2::glib)
+endif()
+
+# Add Windows libraries for static linking
+if(WIN32)
+  target_link_libraries(listener-glib PRIVATE 
+    wsock32 ws2_32 winmm kernel32 user32 gdi32 winspool shell32 
+    ole32 oleaut32 uuid comdlg32 advapi32
+  )
+endif()
 
 add_executable(send_message "send_message.c")
 lcm_target_link_libraries(send_message example_messages-c ${LCM_NAMESPACE}lcm)
